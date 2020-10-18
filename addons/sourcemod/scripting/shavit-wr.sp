@@ -476,9 +476,11 @@ public void SQL_UpdateCache_Callback(Database db, DBResultSet results, const cha
 			continue;
 		}
 
-		gF_PlayerRecord[client][style][track] = results.FetchFloat(0);
+		float pepega = results.FetchFloat(0);
+		// Keep the smaller one cached so floating point precision bugs fuck off
+		if (gF_PlayerRecord[client][style][track] == 0.0 || gF_PlayerRecord[client][style][track] > pepega)
+			gF_PlayerRecord[client][style][track] = pepega;
 		gI_PlayerCompletion[client][style][track] = results.FetchInt(3);
-		
 	}
 
 	gA_WRCache[client].bLoadedCache = true;
