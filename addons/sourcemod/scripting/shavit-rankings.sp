@@ -611,7 +611,7 @@ void QueueNextRecalc(int client)
 	Transaction trans = new Transaction();
 	char sQuery[192];
 
-	ReplyToCommand(client, "- Recalc %d/%d", i, gI_Styles);
+	ReplyToCommand(client, "- Recalc style %d/%d", i, gI_Styles);
 
 	if(gA_StyleSettings[i].bUnranked || gA_StyleSettings[i].fRankingMultiplier == 0.0)
 	{
@@ -631,7 +631,7 @@ public Action Command_RecalcAll(int client, int args)
 {
 	if (gI_RecalcAllStyle != -1)
 	{
-		ReplyToCommand(client, "- Currently in recalc already. %d/%d", gI_RecalcAllStyle, gI_Styles);
+		ReplyToCommand(client, "- Currently in recalc already. Style %d/%d", gI_RecalcAllStyle, gI_Styles);
 		return Plugin_Handled;
 	}
 
