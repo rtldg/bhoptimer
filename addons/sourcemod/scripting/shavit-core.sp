@@ -1714,7 +1714,7 @@ public int Native_FinishMap(Handle handler, int numParams)
 
 	Call_PushCell(oldtime);
 	Call_PushCell(perfs);
-	Call_PushCell(GetTime());
+	Call_PushCell(GetTime()); // TODO: Provide UTC offset from FormatTime(%z)?
 	Call_Finish();
 
 	StopTimer(client);
