@@ -1882,7 +1882,7 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 	Call_PushCell(isWR);
 	Call_PushCell(makeCopy);
 	Call_PushString(path);
-	Call_Finish(action);
+	Call_Finish();
 
 	if(makeWR && ReplayEnabled(style))
 	{
