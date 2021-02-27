@@ -1314,7 +1314,7 @@ void SaveReplay(int style, int track, float time, int steamid, char[] name, int 
 	{
 		FormatEx(outPath, outPathLen, "%s/%d/%s%s.replay", gS_ReplayFolder, style, gS_Map, (track > 0)? sTrack:"");
 		DeleteFile(outPath);
-		fWr = OpenFile(outPath, "wb");
+		fWR = OpenFile(outPath, "wb");
 	}
 
 	if (saveCopy)
