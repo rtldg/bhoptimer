@@ -863,7 +863,7 @@ forward Action Shavit_ShouldSaveReplayCopy(int client, int style, float time, in
  * @param path						Path to the saved replay.
  * @noreturn
  */
-forward void Shavit_OnReplaySaved(int client, int style, float time, int jumps, int strafes, float sync, int track, float oldtime, float perfs, int timestamp, bool isWR, bool isTooLong, bool isCopy, char[] path);
+forward void Shavit_OnReplaySaved(int client, int style, float time, int jumps, int strafes, float sync, int track, float oldtime, float perfs, int timestamp, bool isWR, bool isTooLong, bool isCopy, const char[] path);
 
 /**
  * Called when top left HUD updates.

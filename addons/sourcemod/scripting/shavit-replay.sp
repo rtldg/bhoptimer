@@ -250,7 +250,7 @@ public void OnPluginStart()
 	gH_OnReplayEnd = CreateGlobalForward("Shavit_OnReplayEnd", ET_Event, Param_Cell);
 	gH_OnReplaysLoaded = CreateGlobalForward("Shavit_OnReplaysLoaded", ET_Event);
 	gH_ShouldSaveReplayCopy = CreateGlobalForward("Shavit_ShouldSaveReplayCopy", ET_Event, Param_Cell, Param_Cell, Param_Float, Param_Cell, Param_Cell, Param_Float, Param_Cell, Param_Float, Param_Float, Param_Cell, Param_Cell, Param_Cell);
-	gH_OnReplaySaved = CreateGlobalForward("Shavit_OnReplayCopySaved", ET_Ignore, Param_Cell, Param_Cell, Param_Float, Param_Cell, Param_Cell, Param_Float, Param_Cell, Param_Float, Param_Float, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_String);
+	gH_OnReplaySaved = CreateGlobalForward("Shavit_OnReplaySaved", ET_Ignore, Param_Cell, Param_Cell, Param_Float, Param_Cell, Param_Cell, Param_Float, Param_Cell, Param_Float, Param_Float, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_String);
 
 	// game specific
 	gEV_Type = GetEngineVersion();
