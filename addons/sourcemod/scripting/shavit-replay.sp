@@ -1851,8 +1851,9 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 	Call_Finish(action);
 
 	bool makeCopy = (action != Plugin_Continue);
+	bool makeWR = (isWR && !isTooLong);
 
-	if (!makeCopy && (isTooLong || !isWR))
+	if (!makeCopy && !makeWR)
 	{
 		return;
 	}
@@ -1864,7 +1865,7 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 	ReplaceString(sName, MAX_NAME_LENGTH, "#", "?");
 
 	char path[PLATFORM_MAX_PATH];
-	SaveReplay(style, track, time, iSteamID, sName, gI_PlayerPrerunFrames[client], gA_PlayerFrames[client], gI_PlayerTimerStartFrames[client], timestamp, makeCopy, (isWR && !isTooLong), path, sizeof(path));
+	SaveReplay(style, track, time, iSteamID, sName, gI_PlayerPrerunFrames[client], gA_PlayerFrames[client], gI_PlayerTimerStartFrames[client], timestamp, makeCopy, makeWR, path, sizeof(path));
 
 	Call_StartForward(gH_OnReplaySaved);
 	Call_PushCell(client);
@@ -1883,7 +1884,7 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 	Call_PushString(path);
 	Call_Finish(action);
 
-	if(!isTooLong && isWR && ReplayEnabled(style))
+	if(makeWR && ReplayEnabled(style))
 	{
 		if(gCV_CentralBot.BoolValue && gA_CentralCache.iStyle == style && gA_CentralCache.iTrack == track)
 		{
