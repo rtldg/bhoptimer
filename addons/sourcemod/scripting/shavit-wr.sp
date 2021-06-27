@@ -61,6 +61,8 @@ Handle gH_OnFinishMessage = null;
 Database gH_SQL = null;
 bool gB_Connected = false;
 bool gB_MySQL = false;
+DBStatement gH_WRInsert = null;
+DBStatement gH_WRUpdate = null;
 
 // cache
 wrcache_t gA_WRCache[MAXPLAYERS+1];
@@ -2166,6 +2168,7 @@ void SQL_DBConnect()
 	gB_MySQL = IsMySQLDatabase(gH_SQL);
 
 	char sQuery[1024];
+	char sError[256];
 	Transaction hTransaction = new Transaction();
 
 	if(gB_MySQL)
@@ -2206,6 +2209,28 @@ void SQL_DBConnect()
 	hTransaction.AddQuery(sQuery);
 
 	gH_SQL.Execute(hTransaction, Trans_CreateTable_Success, Trans_CreateTable_Error, 0, DBPrio_High);
+
+	SQL_LockDatabase(gH_SQL);
+
+	FormatEx(sQuery, sizeof(sQuery),
+		"INSERT INTO %splayertimes (auth, map, time, jumps, date, style, strafes, sync, points, track, perfs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.0, ?, ?);",
+		gS_MySQLPrefix);
+
+	if ((gH_WRInsert = SQL_PrepareQuery(gH_SQL, sQuery, sError, sizeof(sError))) == INVALID_HANDLE)
+	{
+		SetFailState(sError);
+	}
+
+	FormatEx(sQuery, sizeof(sQuery),
+		"UPDATE %splayertimes SET time = ?, jumps = ?, date = ?, strafes = ?, sync = ?, points = 0.0, perfs = ? WHERE map = ? AND auth = ? AND style = ? AND track = ?;",
+		gS_MySQLPrefix);
+
+	if ((gH_WRInsert = SQL_PrepareQuery(gH_SQL, sQuery, sError, sizeof(sError))) == INVALID_HANDLE)
+	{
+		SetFailState(sError);
+	}
+
+	SQL_UnlockDatabase(gH_SQL);
 }
 
 public void Trans_CreateTable_Success(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
@@ -2361,21 +2386,67 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 			FormatEx(sMessage, 255, "%s[%s]%s %T",
 				gS_ChatStrings.sVariable, sTrack, gS_ChatStrings.sText, "FirstCompletion", LANG_SERVER, gS_ChatStrings.sVariable2, client, gS_ChatStrings.sText, gS_ChatStrings.sStyle, gS_StyleStrings[style].sStyleName, gS_ChatStrings.sText, gS_ChatStrings.sVariable2, sTime, gS_ChatStrings.sText, gS_ChatStrings.sVariable, iRank, gS_ChatStrings.sText, jumps, strafes, sSync, gS_ChatStrings.sText, gS_ChatStrings.sVariable, avgvel, maxvel, gS_ChatStrings.sText);
 
+#if 1
+			SQL_LockDatabase(gH_SQL);
+			gH_WRInsert.BindInt   (0, iSteamID);
+			gH_WRInsert.BindString(1, gS_Map, false);
+			gH_WRInsert.BindFloat (2, time);
+			gH_WRInsert.BindInt   (3, jumps);
+			gH_WRInsert.BindInt   (4, timestamp);
+			gH_WRInsert.BindInt   (5, style);
+			gH_WRInsert.BindInt   (6, strafes);
+			gH_WRInsert.BindFloat (7, sync);
+			gH_WRInsert.BindInt   (8, track);
+			gH_WRInsert.BindFloat (9, perfs);
+			bool res = SQL_Execute(gH_WRInsert);
+			SQL_UnlockDatabase(gH_SQL);
+
+			if (!res)
+			{
+				char sError[256];
+				SQL_GetError(gH_WRInsert, sError, sizeof(sError));
+				PrintToServer("Failed to execute query: %s", sError);
+			}
+#else
 			FormatEx(sQuery, 512,
 				"INSERT INTO %splayertimes (auth, map, time, jumps, date, style, strafes, sync, points, track, perfs) VALUES (%d, '%s', %f, %d, %d, %d, %d, %.2f, 0.0, %d, %.2f);",
 				gS_MySQLPrefix, iSteamID, gS_Map, time, jumps, timestamp, style, strafes, sync, track, perfs);
+#endif
 		}
 		else // update
 		{
 			FormatEx(sMessage, 255, "%s[%s]%s %T",
 				gS_ChatStrings.sVariable, sTrack, gS_ChatStrings.sText, "NotFirstCompletion", LANG_SERVER, gS_ChatStrings.sVariable2, client, gS_ChatStrings.sText, gS_ChatStrings.sStyle, gS_StyleStrings[style].sStyleName, gS_ChatStrings.sText, gS_ChatStrings.sVariable2, sTime, gS_ChatStrings.sText, gS_ChatStrings.sVariable, iRank, gS_ChatStrings.sText, jumps, strafes, sSync, gS_ChatStrings.sText, gS_ChatStrings.sVariable, avgvel, maxvel, gS_ChatStrings.sWarning, sDifference);
 
+#if 1
+			SQL_LockDatabase(gH_SQL);
+			gH_WRUpdate.BindFloat (0, time);
+			gH_WRUpdate.BindInt   (1, jumps);
+			gH_WRUpdate.BindInt   (2, timestamp);
+			gH_WRUpdate.BindInt   (3, strafes);
+			gH_WRUpdate.BindFloat (4, sync);
+			gH_WRUpdate.BindFloat (5, perfs);
+			gH_WRUpdate.BindString(6, gS_Map, false);
+			gH_WRUpdate.BindInt   (7, iSteamID);
+			gH_WRUpdate.BindInt   (8, style);
+			gH_WRUpdate.BindInt   (9, track);
+			bool res = SQL_Execute(gH_WRUpdate);
+			SQL_UnlockDatabase(gH_SQL);
+
+			if (!res)
+			{
+				char sError[256];
+				SQL_GetError(gH_WRUpdate, sError, sizeof(sError));
+				PrintToServer("Failed to execute query2: %s", sError);
+			}
+#else
 			FormatEx(sQuery, 512,
 				"UPDATE %splayertimes SET time = %f, jumps = %d, date = %d, strafes = %d, sync = %.02f, points = 0.0, perfs = %.2f WHERE map = '%s' AND auth = %d AND style = %d AND track = %d;",
 				gS_MySQLPrefix, time, jumps, timestamp, strafes, sync, perfs, gS_Map, iSteamID, style, track);
+#endif
 		}
 
-		gH_SQL.Query(SQL_OnFinish_Callback, sQuery, GetClientSerial(client), DBPrio_High);
+		//gH_SQL.Query(SQL_OnFinish_Callback, sQuery, GetClientSerial(client), DBPrio_High);
 
 		Call_StartForward(gH_OnFinish_Post);
 		Call_PushCell(client);
