@@ -552,6 +552,19 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		}
 		else if (type == AutostrafeType_Autogain || type == AutostrafeType_AutogainNoSpeedLoss)
 		{
+#if 0
+			float delta = AngleNormalize(angles[1] - oldyaw);
+
+			if (delta < 0.0)
+			{
+				vel[1] = g_fMaxMove;
+			}
+			else if (delta > 0.0)
+			{
+				vel[1] = -g_fMaxMove;
+			}
+#endif
+
 			ObliviousOnPlayerRunCmd(client, buttons, impulse, vel, angles, weapon, subtype, cmdnum, tickcount, seed, mouse,
 				sv_airaccelerate.FloatValue, flSurfaceFriction, g_flAirSpeedCap, g_fMaxMove,
 				(type == AutostrafeType_AutogainNoSpeedLoss));
