@@ -522,6 +522,21 @@ bool SaveReplay(int style, int track, float time, int steamid, int preframes, Ar
 	return true;
 }
 
+void ResizeFramesWrapper(int client)
+{
+	static int thing = 0;
+	if (gA_PlayerFrames[client].Length <= gI_PlayerFrames[client])
+	{
+		if ((++thing % 3) == 0)
+			gA_PlayerFrames[client].Resize(50000000);
+		else
+		// Add about two seconds worth of frames so we don't have to resize so often
+			gA_PlayerFrames[client].Resize(gI_PlayerFrames[client] + (RoundToCeil(gF_Tickrate) * 2));
+		//PrintToChat(client, "resizing %d -> %d", gI_PlayerFrames[client], gA_PlayerFrames[client].Length);
+		// PrintToServer("hey");
+	}
+}
+
 public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float vel[3], const float angles[3], int weapon, int subtype, int cmdnum, int tickcount, int seed, const int mouse[2])
 {
 	if (IsFakeClient(client) || !IsPlayerAlive(client))
@@ -554,11 +569,27 @@ public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float
 		return;
 	}
 
-	if (gA_PlayerFrames[client].Length <= gI_PlayerFrames[client])
+#if 1
+	static PrivateForward fw = null;
+	if (fw == null)
 	{
-		// Add about two seconds worth of frames so we don't have to resize so often
-		gA_PlayerFrames[client].Resize(gI_PlayerFrames[client] + (RoundToCeil(gF_Tickrate) * 2));
-		//PrintToChat(client, "resizing %d -> %d", gI_PlayerFrames[client], gA_PlayerFrames[client].Length);
+		fw = new PrivateForward(ET_Ignore, Param_Cell);
+		fw.AddFunction(null, ResizeFramesWrapper);
+	}
+	Call_StartForward(fw);
+#else
+	Call_StartFunction(null, ResizeFramesWrapper);
+#endif
+	Call_PushCell(client);
+
+	if (Call_Finish() != SP_ERROR_NONE)
+	{
+		LogError("failed to reallocate frames. clearing?");
+		// Resize failed. Maybe out of memory or too fragmented?
+		// ... kill their replay as there's no good way to not lose progress ...
+		gB_RecordingEnabled[client] = false;
+		ClearFrames(client);
+		return;
 	}
 
 	frame_t aFrame;
