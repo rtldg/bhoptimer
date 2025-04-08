@@ -343,7 +343,7 @@ public Action Timer_PrintToChat(Handle timer)
 			if (1 <= timeleft <= 3 && !gCV_Hide321CountDown.BoolValue)
 			{
 				Shavit_StopChatSound();
-				Shavit_PrintToChatAll("%d..", timeleft);
+				Shavit_PrintToChatAll("%s%d%s..", gS_ChatStrings.sVariable, timeleft, gS_ChatStrings.sText);
 			}
 
 			if (timeleft == 1)
@@ -368,12 +368,12 @@ public Action Timer_PrintToChat(Handle timer)
 		{
 			IntToString(timeleft/60, timebuf, sizeof(timebuf));
 			Shavit_StopChatSound();
-			Shavit_PrintToChatAll("%T", "Minutes", LANG_SERVER, timebuf);
+			Shavit_PrintToChatAll("%s%s %sminutes remaining.", gS_ChatStrings.sVariable, timebuf, gS_ChatStrings.sText);
 		}
 		case 60, 30, 15:
 		{
 			IntToString(timeleft, timebuf, sizeof(timebuf));
-			Shavit_PrintToChatAll("%T", "Seconds", LANG_SERVER, timebuf);
+			Shavit_PrintToChatAll("%s%s %sseconds remaining.", gS_ChatStrings.sVariable, timebuf, gS_ChatStrings.sText);
 		}
 
 		case 0: // case 0 is hit twice....
@@ -384,16 +384,16 @@ public Action Timer_PrintToChat(Handle timer)
 				Call_Finish();
 			}
 
-			Shavit_PrintToChatAll("%d..", gB_AlternateZeroPrint ? 4 : 5);
+			Shavit_PrintToChatAll("%s%d%s..", gS_ChatStrings.sVariable, gB_AlternateZeroPrint ? 4 : 5, gS_ChatStrings.sText);
 			gB_AlternateZeroPrint = !gB_AlternateZeroPrint;
 		}
 		case -1:
 		{
-			Shavit_PrintToChatAll("3..");
+			Shavit_PrintToChatAll("%s3%s..", gS_ChatStrings.sVariable, gS_ChatStrings.sText);
 		}
 		case -2:
 		{
-			Shavit_PrintToChatAll("2..");
+			Shavit_PrintToChatAll("%s2%s..", gS_ChatStrings.sVariable, gS_ChatStrings.sText);
 
 			if (gEV_Type != Engine_CSGO)
 			{
@@ -404,7 +404,7 @@ public Action Timer_PrintToChat(Handle timer)
 		}
 		case -3:
 		{
-			Shavit_PrintToChatAll("1..");
+			Shavit_PrintToChatAll("%s1%s..", gS_ChatStrings.sVariable, gS_ChatStrings.sText);
 
 			if (gEV_Type == Engine_CSGO)
 			{
