@@ -884,7 +884,7 @@ public Action Command_Save(int client, int args)
 
 	if(SaveCheckpoint(client))
 	{
-		Shavit_PrintToChat(client, "%T", "MiscCheckpointsSaved", client, gI_CurrentCheckpoint[client], gS_ChatStrings.sVariable, gS_ChatStrings.sText);
+		//Shavit_PrintToChat(client, "%T", "MiscCheckpointsSaved", client, gI_CurrentCheckpoint[client], gS_ChatStrings.sVariable, gS_ChatStrings.sText);
 
 		if (ShouldReopenCheckpointMenu(client))
 		{
