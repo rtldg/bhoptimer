@@ -114,6 +114,9 @@ bool gB_Protobuf = false;
 bool gB_NewMessage[MAXPLAYERS+1];
 StringMap gSM_Messages = null;
 
+//kawaii uwu
+bool g_bUwu[MAXPLAYERS+1] = {false, ...};
+
 char gS_ControlCharacters[][] = {"\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09",
 	"\x0A", "\x0B", "\x0C", "\x0D", "\x0E", "\x0F", "\x10" };
 
@@ -158,6 +161,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_chatrank", Command_ChatRanks, "View a menu of the chat ranks.");
 	RegConsoleCmd("sm_chatranks", Command_ChatRanks, "View a menu of the chat ranks.");
 	RegConsoleCmd("sm_ranks", Command_ChatRanks, "View a menu of the chat ranks.");
+	RegConsoleCmd("sm_uwu", Command_Uwu, "Make your chat messages cute c:");
 
 	RegAdminCmd("sm_cclist", Command_CCList, ADMFLAG_CHAT, "Print the custom chat setting of all online players.");
 	RegAdminCmd("sm_reloadchatranks", Command_ReloadChatRanks, ADMFLAG_ROOT, "Reloads the chatranks config file.");
@@ -205,6 +209,43 @@ public void OnPluginStart()
 	gB_RTLer = LibraryExists("rtler");
 }
 
+//kawaii UwU
+public Action Command_Uwu(int client, int args)
+{
+	if (args < 1)
+	{
+		g_bUwu[client] = !g_bUwu[client];
+		Shavit_PrintToChat(client, "Cute chat messages %s%s", gS_ChatStrings.sVariable, g_bUwu[client] ? "enabled" : "disabled");
+		return Plugin_Handled;
+	}
+
+	if(!CheckCommandAccess(client, "sm_ban", ADMFLAG_BAN))
+	{
+		Shavit_PrintToChat(client, "You do not have access to make other players' messages cute");
+	}
+	else
+	{
+		char arg[65];
+		GetCmdArg(1, arg, sizeof(arg));
+
+		char target_name[MAX_TARGET_LENGTH];
+		int target_list[MAXPLAYERS], target_count;
+		bool tn_is_ml;
+		
+		if((target_count = ProcessTargetString(arg, client, target_list, MAXPLAYERS, 0, target_name, sizeof(target_name), tn_is_ml)) <= 0)
+		{
+			Shavit_PrintToChat(client, "No matching player found");
+			return Plugin_Handled;
+		}
+
+		for (int i = 0; i < target_count; i++)
+		{
+			g_bUwu[target_list[i]] = !g_bUwu[target_list[i]];
+			Shavit_PrintToChat(client, "Cute chat for %N %s%s", target_list[i], gS_ChatStrings.sVariable, g_bUwu[target_list[i]] ? "enabled" : "disabled");
+		}
+	}
+	return Plugin_Handled;
+}
 public void OnAllPluginsLoaded()
 {
 	gCV_TimeInMessages = FindConVar("shavit_core_timeinmessages");
@@ -499,6 +540,31 @@ public Action Hook_SayText2(UserMsg msg_id, Handle msg, const int[] players, int
 		}
 		else
 		{
+			//kawaii 4chan greentext
+			if(sOriginalText[0] == '>')
+			{
+				TrimString(sOriginalText);
+				Format(sOriginalText, MAXLENGTH_MESSAGE, "\x07789922%s", sOriginalText);
+			}
+			//kawaii uwu
+			if(g_bUwu[client])
+			{
+				ReplaceString(sOriginalText, MAXLENGTH_MESSAGE, "l", "w", true);
+				ReplaceString(sOriginalText, MAXLENGTH_MESSAGE, "r", "w", true);
+				ReplaceString(sOriginalText, MAXLENGTH_MESSAGE, "L", "W", true);
+				ReplaceString(sOriginalText, MAXLENGTH_MESSAGE, "R", "W", true);
+				ReplaceString(sOriginalText, MAXLENGTH_MESSAGE, "na", "nya", true);
+				ReplaceString(sOriginalText, MAXLENGTH_MESSAGE, "Na", "Nya", true);
+				ReplaceString(sOriginalText, MAXLENGTH_MESSAGE, "NA", "NYA", true);
+
+				char faces[][] = {" owo", " UwU", " >w<", " ^w^", " OwO", " :3", " >:3", "~", "teehee~"};
+				
+				if (GetRandomInt(1, 6) > 4)
+				{
+					int randFace = GetRandomInt(0, 8);
+					StrCat(sOriginalText, MAXLENGTH_MESSAGE, faces[randFace]);
+				}
+			}
 			Format(sOriginalText, MAXLENGTH_MESSAGE, "%s%s", sCMessage, sOriginalText);
 		}
 	}
@@ -651,6 +717,9 @@ public void OnClientDisconnect(int client)
 	{
 		SaveToDatabase(client);
 	}
+	
+	//kawaii uwu
+	g_bUwu[client] = false;
 }
 
 public void OnClientAuthorized(int client, const char[] auth)
