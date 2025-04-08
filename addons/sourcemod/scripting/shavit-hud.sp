@@ -1428,6 +1428,13 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 		}
 	}
 
+
+	if(data.iTimerStatus != Timer_Stopped && (gI_HUD2Settings[client] & HUD2_TIMEDIFFERENCE) == 0 && data.fClosestReplayTime != -1.0)
+	{
+		FormatEx(sLine, 128, "Progress: %.1f％", (((data.fTime - (data.fTime - data.fClosestReplayTime)) / data.fWR) * 100.0));
+		AddHUDLine(buffer, maxlen, sLine, iLines);
+	}
+	
 	if(data.iTimerStatus != Timer_Stopped && data.iTrack != Track_Main && (gI_HUD2Settings[client] & HUD2_TRACK) == 0)
 	{
 		char sTrack[32];
