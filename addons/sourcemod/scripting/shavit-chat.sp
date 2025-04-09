@@ -790,7 +790,7 @@ public Action Command_CCName(int client, int args)
 	else if(StrEqual(sArgs, "off"))
 	{
 		Shavit_PrintToChat(client, "%T", "NameOff", client, sArgs);
-		sArgs = "{team}{name}";
+		sArgs = "{rand}{name}";
 	}
 	else
 	{
