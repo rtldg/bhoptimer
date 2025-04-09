@@ -707,7 +707,7 @@ public void OnClientCookiesCached(int client)
 public void OnClientConnected(int client)
 {
 	gB_CCAccess[client] = false;
-	strcopy(gS_CustomName[client], sizeof(gS_CustomName[]), "{team}{name}");
+	strcopy(gS_CustomName[client], sizeof(gS_CustomName[]), "{rand}{name}");
 	strcopy(gS_CustomMessage[client], sizeof(gS_CustomMessage[]), "{default}");
 }
 
