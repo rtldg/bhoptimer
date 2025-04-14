@@ -477,10 +477,10 @@ public Action Hook_SayText2(UserMsg msg_id, Handle msg, const int[] players, int
 		bfmsg.ReadString(sOriginalText, MAXLENGTH_TEXT);
 	}
 
-	if(client == 0)
-	{
-		return Plugin_Continue;
-	}
+	//if(client == 0)
+	//{
+	//	return Plugin_Continue;
+	//}
 
 	if(!gB_NewMessage[client])
 	{
