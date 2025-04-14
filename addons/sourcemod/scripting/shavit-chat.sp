@@ -1492,10 +1492,10 @@ void LoadFromDatabase(int client)
 
 	int iSteamID = GetSteamAccountID(client);
 
-	if(iSteamID == 0)
-	{
-		return;
-	}
+	//if(iSteamID == 0)
+	//{
+	//	return;
+	//}
 
 	char sQuery[256];
 	FormatEx(sQuery, 256, "SELECT name, ccname, message, ccmessage, ccaccess FROM %schat WHERE auth = %d;", gS_MySQLPrefix, iSteamID);
