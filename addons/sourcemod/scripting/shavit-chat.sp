@@ -429,7 +429,7 @@ bool LoadChatSettings()
 
 public Action OnClientSayCommand(int client, const char[] command, const char[] sArgs)
 {
-	if(1 <= client <= MaxClients)
+	if(0 <= client <= MaxClients)
 	{
 		gB_NewMessage[client] = true;
 	}
