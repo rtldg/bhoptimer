@@ -1514,10 +1514,10 @@ public void SQL_GetChat_Callback(Database db, DBResultSet results, const char[] 
 
 	int client = GetClientFromSerial(data);
 
-	if(client == 0)
-	{
-		return;
-	}
+	//if(client == 0)
+	//{
+	//	return;
+	//}
 
 	gB_ChangedSinceLogin[client] = false;
 
