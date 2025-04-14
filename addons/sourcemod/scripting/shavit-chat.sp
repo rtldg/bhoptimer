@@ -594,10 +594,10 @@ void Frame_SendText(DataPack pack)
 
 	int client = GetClientFromSerial(serial);
 
-	if(client == 0)
-	{
-		return;
-	}
+	//if(client == 0)
+	//{
+	//	return;
+	//}
 
 	int team = GetClientTeam(client);
 	int clients[MAXPLAYERS+1];
