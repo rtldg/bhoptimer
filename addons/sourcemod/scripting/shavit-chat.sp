@@ -762,12 +762,12 @@ public Action Command_CCHelp(int client, int args)
 
 public Action Command_CCName(int client, int args)
 {
-	if(client == 0)
-	{
-		ReplyToCommand(client, "%t", "NoConsole");
+	//if(client == 0)
+	//{
+	//	ReplyToCommand(client, "%t", "NoConsole");
 
-		return Plugin_Handled;
-	}
+	//	return Plugin_Handled;
+	//}
 
 	if(!HasCustomChat(client))
 	{
