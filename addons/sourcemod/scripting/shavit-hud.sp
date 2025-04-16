@@ -1776,6 +1776,15 @@ void UpdateMainHUD(int client)
 	
 	if (!bReplay && gB_ReplayPlayback)
 	{
+		if (Shavit_GetReplayFrameCount(Shavit_GetBhopStyle(target), huddata.iTrack) != 0)
+		{
+			Shavit_SetClosestReplayStyle(target, Shavit_GetBhopStyle(target));
+		}
+		else
+		{
+			Shavit_SetClosestReplayStyle(target, 0);
+		}
+		
 		if (Shavit_GetReplayFrameCount(Shavit_GetClosestReplayStyle(target), huddata.iTrack) != 0)
 		{
 			if(Shavit_GetClosestReplayStyle(client) == Shavit_GetBhopStyle(client))
@@ -1794,10 +1803,6 @@ void UpdateMainHUD(int client)
 				huddata.fWR = Shavit_GetWorldRecord(0, huddata.iTrack);
 				huddata.fClosestReplayTime = Shavit_GetClosestReplayTime(target, huddata.fClosestReplayLength);
 			}
-		}
-		else
-		{
-			Shavit_SetClosestReplayStyle(target, 0);
 		}
 	}
 
