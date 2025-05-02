@@ -1232,7 +1232,8 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 {
 	int iLines = 0;
 	char sLine[128];
-
+	int target = GetSpectatorTarget(client, client);
+	
 	if (client == data.iTarget && !AreClientCookiesCached(client))
 	{
 		FormatEx(sLine, sizeof(sLine), "%T", "TimerLoading", client);
@@ -1348,7 +1349,7 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 
 			char sTimeDiff[32];
 
-			if ((gI_HUD2Settings[client] & HUD2_TIMEDIFFERENCE) == 0 && data.fClosestReplayTime != -1.0 && Shavit_GetClosestReplayStyle(client) == Shavit_GetBhopStyle(client))
+			if ((gI_HUD2Settings[client] & HUD2_TIMEDIFFERENCE) == 0 && data.fClosestReplayTime != -1.0 && Shavit_GetClosestReplayStyle(client) == Shavit_GetBhopStyle(target))
 			{
 				float fDifference = data.fTime - data.fClosestReplayTime;
 				FormatSeconds(fDifference, sTimeDiff, 32, false, FloatAbs(fDifference) >= 60.0);
@@ -1428,7 +1429,7 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 		}
 	}
 	
-	if(data.iTimerStatus != Timer_Stopped && (gI_HUD2Settings[client] & HUD2_TIMEDIFFERENCE) == 0 && data.fClosestReplayTime != -1.0)
+	if(data.iTimerStatus != Timer_Stopped && data.fClosestReplayTime != -1.0)
 	{
 		FormatEx(sLine, 128, "Progress: %.1f％", (((data.fTime - (data.fTime - data.fClosestReplayTime)) / data.fWR) * 100.0));
 		AddHUDLine(buffer, maxlen, sLine, iLines);
@@ -1785,7 +1786,7 @@ void UpdateMainHUD(int client)
 			Shavit_SetClosestReplayStyle(client, 0);
 		}
 		
-		if (Shavit_GetReplayFrameCount(Shavit_GetClosestReplayStyle(target), huddata.iTrack) != 0)
+		if (Shavit_GetReplayFrameCount(Shavit_GetClosestReplayStyle(client), huddata.iTrack) != 0)
 		{
 			if(Shavit_GetClosestReplayStyle(client) == Shavit_GetBhopStyle(target))
 			{
