@@ -254,6 +254,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_nomlist", Command_NomList, "Shows currently nominated maps");
 	RegConsoleCmd("sm_nominatedmaps", Command_NomList, "Shows currently nominated maps");
 	RegConsoleCmd("sm_nominations", Command_NomList, "Shows currently nominated maps");
+	RegConsoleCmd("sm_nextmap", Command_NextMap, "Shows next map");
 
 	RegAdminCmd("sm_smcdebug", Command_Debug, ADMFLAG_RCON);
 
@@ -2026,6 +2027,21 @@ public Action Command_NomList(int client, int args)
 	return Plugin_Handled;
 }
 
+public Action Command_NextMap(int client, int args)
+{
+	if(g_bMapVoteFinished)
+	{
+		char map[PLATFORM_MAX_PATH];
+		GetNextMap(map, sizeof(map));
+		Shavit_PrintToChat(client, "The next map is %s%s", gS_ChatStrings.sVariable, map);
+	}
+	else
+	{
+		Shavit_PrintToChat(client, "The next map has %snot %sbeen voted yet", gS_ChatStrings.sWarning, gS_ChatStrings.sText);
+	}
+	return Plugin_Handled;
+}
+		
 public int Null_Callback(Menu menu, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_End)
