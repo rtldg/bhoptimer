@@ -1333,7 +1333,35 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 	{
 		if((gI_HUD2Settings[client] & HUD2_STYLE) == 0)
 		{
-			AddHUDLine(buffer, maxlen, gS_StyleStrings[data.iStyle].sStyleName, iLines);
+			if(Shavit_GetStyleSettingBool(data.iStyle, "a_or_d_only"))
+			{
+				char sKey1[16] = "A-Only";
+				char sKey2[16] = "D-Only";
+				
+				if(StrEqual(gS_StyleStrings[data.iStyle].sStyleName, "WA/WD Only"))
+				{
+					sKey1 = "W-A-Only";
+					sKey2 = "W-D-Only";
+				}
+				
+				if (Shavit_GetClientKeyCombo(client) == 0)
+				{
+					AddHUDLine(buffer, maxlen, sKey1, iLines);
+					
+				}
+				else if (Shavit_GetClientKeyCombo(client) == 1)
+				{
+					AddHUDLine(buffer, maxlen, sKey2, iLines);
+				}
+				else
+				{
+					AddHUDLine(buffer, maxlen, gS_StyleStrings[data.iStyle].sStyleName, iLines);
+				}
+			}
+			else
+			{
+				AddHUDLine(buffer, maxlen, gS_StyleStrings[data.iStyle].sStyleName, iLines);
+			}
 		}
 
 		if(data.bPractice || data.iTimerStatus == Timer_Paused)
@@ -1580,7 +1608,7 @@ int AddHUDToBuffer_CSGO(int client, huddata_t data, char[] buffer, int maxlen)
 		{
 			int iColor = 0xFF0000; // red, worse than both pb and wr
 
-			if (false && data.iTimerStatus == Timer_Paused)
+			if (data.iTimerStatus == Timer_Paused)
 			{
 				iColor = 0xA9C5E8; // blue sky
 			}
@@ -2311,7 +2339,7 @@ void UpdateTopLeftHUD(int client, bool wait)
 
 void UpdateKeyHint(int client)
 {
-	if ((gI_Cycle % 10) != 0)
+	if ((gI_Cycle % 10) != 0 || !IsValidClient(client))
 	{
 		return;
 	}
