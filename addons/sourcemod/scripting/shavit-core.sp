@@ -211,6 +211,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("Shavit_GetChatStrings", Native_GetChatStrings);
 	CreateNative("Shavit_GetChatStringsStruct", Native_GetChatStringsStruct);
 	CreateNative("Shavit_GetClientJumps", Native_GetClientJumps);
+	CreateNative("Shavit_GetClientKeyCombo", Native_GetClientKeyCombo);
 	CreateNative("Shavit_GetClientTime", Native_GetClientTime);
 	CreateNative("Shavit_GetClientTrack", Native_GetClientTrack);
 	CreateNative("Shavit_GetDatabase", Native_GetDatabase);
@@ -246,7 +247,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("Shavit_GotoEnd", Native_GotoEnd);
 	CreateNative("Shavit_UpdateLaggedMovement", Native_UpdateLaggedMovement);
 	CreateNative("Shavit_PrintSteamIDOnce", Native_PrintSteamIDOnce);
-
+	
 	// registers library, check "bool LibraryExists(const char[] name)" in order to use with other plugins
 	RegPluginLibrary("shavit");
 
@@ -1389,7 +1390,7 @@ public Action Command_Style(int client, int args)
 		else
 		{
 			float time = Shavit_GetWorldRecord(iStyle, gA_Timers[client].iTimerTrack);
-
+			
 			if(time > 0.0)
 			{
 				char sTime[32];
@@ -1405,9 +1406,9 @@ public Action Command_Style(int client, int args)
 
 				char sName[64];
 				GetStyleSetting(iStyle, "name", sName, sizeof(sName));
-
+				
 				float pb = Shavit_GetClientPB(client, iStyle, gA_Timers[client].iTimerTrack);
-
+				
 				if(pb > 0.0)
 				{
 					char sPb[32];
@@ -1532,11 +1533,11 @@ void UpdateLaggedMovement(int client, bool user_timescale)
 	}
 }
 
-void CallOnStyleChanged(int client, int oldstyle, int newstyle, bool manual, bool noforward=false)
+void CallOnStyleChanged(int client, int oldstyle, int newstyle, bool manual, bool nofoward=false)
 {
 	gA_Timers[client].bsStyle = newstyle;
 
-	if (!noforward)
+	if (!nofoward)
 	{
 		Call_StartForward(gH_Forwards_OnStyleChanged);
 		Call_PushCell(client);
@@ -2428,6 +2429,11 @@ public int Native_SetClientTimescale(Handle handler, int numParams)
 	}
 
 	return 1;
+}
+
+public int Native_GetClientKeyCombo(Handle handler, int numParams)
+{
+	return gA_Timers[GetNativeCell(1)].iKeyCombo;
 }
 
 public any Native_GetAvgVelocity(Handle plugin, int numParams)
