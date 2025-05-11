@@ -42,6 +42,7 @@
 #define HUD_GLOCK               (1 << 14) // makes you spawn with a Glock
 #define HUD_DEBUGTARGETNAME     (1 << 15) // admin option to show current targetname & classname
 #define HUD_SPECTATORSDEAD      (1 << 16) // for only showing spectators list when you're dead/spectating.
+#define HUD_LANDFIX             (1 << 17) // for showing if landfix is enabled
 
 // HUD2 - these settings will *disable* elements for the main hud
 #define HUD2_TIME               (1 << 0)
@@ -62,7 +63,7 @@
 #define HUD2_GLOCKBURST         (1 << 15) // spawns glocks with burst
 #define HUD2_CENTERKEYS         (1 << 16) // CSGO option to toggle whether !keys is shown as center-text or in that panel thing.
 
-#define HUD_DEFAULT             (HUD_MASTER|HUD_CENTER|HUD_ZONEHUD|HUD_OBSERVE|HUD_TOPLEFT|HUD_SYNC|HUD_TIMELEFT|HUD_2DVEL|HUD_SPECTATORS)
+#define HUD_DEFAULT             (HUD_MASTER|HUD_CENTER|HUD_ZONEHUD|HUD_OBSERVE|HUD_TOPLEFT|HUD_SYNC|HUD_TIMELEFT|HUD_2DVEL|HUD_SPECTATORS|HUD_LANDFIX)
 #define HUD_DEFAULT2            (HUD2_PERFS)
 
 stock bool HUD1Enabled(int hudbits, int flag)
