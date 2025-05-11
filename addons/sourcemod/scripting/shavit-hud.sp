@@ -1350,12 +1350,12 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 					sKey2 = "W-D-Only";
 				}
 				
-				if (Shavit_GetClientKeyCombo(client) == 0)
+				if (Shavit_GetClientKeyCombo(target) == 0)
 				{
 					AddHUDLine(buffer, maxlen, sKey1, iLines);
 					
 				}
-				else if (Shavit_GetClientKeyCombo(client) == 1)
+				else if (Shavit_GetClientKeyCombo(target) == 1)
 				{
 					AddHUDLine(buffer, maxlen, sKey2, iLines);
 				}
@@ -2408,7 +2408,7 @@ void UpdateKeyHint(int client)
 	{
 		if ((gI_HUDSettings[client] & HUD_LANDFIX) > 0)
 		{
-			FormatEx(sMessage, 256, "%s", Landfix_GetLandfixEnabled(client)?"Landfix On\n\n":"");
+			FormatEx(sMessage, 256, "%s", Landfix_GetLandfixEnabled(target)?"Landfix On\n\n":"");
 		}
 	}
 
