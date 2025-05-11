@@ -40,6 +40,7 @@
 
 #undef REQUIRE_EXTENSIONS
 #include <cstrike>
+#include <modern-landfix>
 
 #pragma newdecls required
 #pragma semicolon 1
@@ -201,14 +202,15 @@ public void OnPluginStart()
 		..."HUD_KEYOVERLAY			32\n"
 		..."HUD_HIDEWEAPON			64\n"
 		..."HUD_TOPLEFT				128\n"
-		..."HUD_SYNC					256\n"
-		..."HUD_TIMELEFT				512\n"
+		..."HUD_SYNC				256\n"
+		..."HUD_TIMELEFT			512\n"
 		..."HUD_2DVEL				1024\n"
-		..."HUD_NOSOUNDS				2048\n"
+		..."HUD_NOSOUNDS			2048\n"
 		..."HUD_NOPRACALERT			4096\n"
-		..."HUD_USP                  8192\n"
-		..."HUD_GLOCK                16384\n"
-		..."HUD_SPECTATORSDEAD       65536\n"
+		..."HUD_USP				8192\n"
+		..."HUD_GLOCK				16384\n"
+		..."HUD_SPECTATORSDEAD			65536\n"
+		..."HUD_LANDFIX				131072\n"
 	);
 
 	IntToString(HUD_DEFAULT2, defaultHUD, 8);
@@ -221,15 +223,15 @@ public void OnPluginStart()
 		..."HUD2_STYLE				32\n"
 		..."HUD2_RANK				64\n"
 		..."HUD2_TRACK				128\n"
-		..."HUD2_SPLITPB				256\n"
-		..."HUD2_MAPTIER				512\n"
-		..."HUD2_TIMEDIFFERENCE		1024\n"
+		..."HUD2_SPLITPB			256\n"
+		..."HUD2_MAPTIER			512\n"
+		..."HUD2_TIMEDIFFERENCE			1024\n"
 		..."HUD2_PERFS				2048\n"
-		..."HUD2_TOPLEFT_RANK		4096\n"
-		..."HUD2_VELOCITYDIFFERENCE	8192\n"
-		..."HUD2_USPSILENCER         16384\n"
-		..."HUD2_GLOCKBURST          32768\n"
-		..."HUD2_CENTERKEYS          65536\n"
+		..."HUD2_TOPLEFT_RANK			4096\n"
+		..."HUD2_VELOCITYDIFFERENCE		8192\n"
+		..."HUD2_USPSILENCER			16384\n"
+		..."HUD2_GLOCKBURST			32768\n"
+		..."HUD2_CENTERKEYS			65536\n"
 	);
 
 	Convar.AutoExecConfig();
@@ -689,6 +691,10 @@ Action ShowHUDMenu(int client, int item)
 
 	FormatEx(sInfo, 16, "!%d", HUD_SPECTATORSDEAD);
 	FormatEx(sHudItem, 64, "%T", "HudSpectatorsDead", client);
+	menu.AddItem(sInfo, sHudItem);
+	
+	FormatEx(sInfo, 16, "!%d", HUD_LANDFIX);
+	FormatEx(sHudItem, 64, "%T", "HudLandfix", client);
 	menu.AddItem(sInfo, sHudItem);
 
 	FormatEx(sInfo, 16, "!%d", HUD_KEYOVERLAY);
@@ -1338,7 +1344,7 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 				char sKey1[16] = "A-Only";
 				char sKey2[16] = "D-Only";
 				
-				if(StrEqual(gS_StyleStrings[data.iStyle].sStyleName, "WA/WD Only"))
+				if(StrEqual(gS_StyleStrings[data.iStyle].sStyleName, "W-A/W-D-Only"))
 				{
 					sKey1 = "W-A-Only";
 					sKey2 = "W-D-Only";
@@ -2393,9 +2399,17 @@ void UpdateKeyHint(int client)
 		return;
 	}
 
-	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
+	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && !(gI_HUDSettings[client] & HUD_LANDFIX) && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
 	{
 		return;
+	}
+
+	if(LibraryExists("modern-landfix"))
+	{
+		if ((gI_HUDSettings[client] & HUD_LANDFIX) > 0)
+		{
+			FormatEx(sMessage, 256, "%s", Landfix_GetLandfixEnabled(client)?"Landfix On\n\n":"");
+		}
 	}
 
 	if ((gI_HUDSettings[client] & HUD_TIMELEFT) > 0 && GetMapTimeLeft(iTimeLeft) && iTimeLeft > 0)
