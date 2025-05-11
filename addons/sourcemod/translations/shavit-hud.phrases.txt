@@ -143,6 +143,10 @@
 	{
 		"en"		"Spectator list (only when dead)"
 	}
+	"HudLandfix"
+	{
+		"en"		"Landfix"
+	}
 	"HudKeyOverlay"
 	{
 		"en"		"Key display"
