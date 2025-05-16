@@ -715,7 +715,7 @@ public void ApplyMigration_MoreFirstLoginStuff()
 	{
 		FormatEx(query, sizeof(query),
 			"UPDATE %susers JOIN ( \
-				SELECT auth, MIN(`date`) as min_date \
+				SELECT auth, MIN(FLOOR(`date` - `time`)) as min_date \
 				FROM %splayertimes \
 				WHERE `date` > 1188518400 \
 				GROUP BY auth \
@@ -727,7 +727,7 @@ public void ApplyMigration_MoreFirstLoginStuff()
 		AddQueryLog(trans, query);
 		FormatEx(query, sizeof(query),
 			"UPDATE %susers JOIN ( \
-				SELECT auth, MIN(`date`) as min_date \
+				SELECT auth, MIN(FLOOR(`date` - `time`)) as min_date \
 				FROM %splayertimes \
 				WHERE `date` > 1188518400 \
 				GROUP BY auth \
@@ -743,7 +743,7 @@ public void ApplyMigration_MoreFirstLoginStuff()
 		FormatEx(query, sizeof(query),
 			"UPDATE %susers SET firstlogin = pt.min_date \
 			FROM ( \
-				SELECT auth, MIN(date) as min_date \
+				SELECT auth, MIN(FLOOR(date - time)) as min_date \
 				FROM %splayertimes \
 				WHERE date > 1188518400 \
 				GROUP BY auth \
@@ -755,7 +755,7 @@ public void ApplyMigration_MoreFirstLoginStuff()
 		FormatEx(query, sizeof(query),
 			"UPDATE %susers SET firstlogin = MIN(firstlogin, pt.min_date) \
 			FROM ( \
-				SELECT auth, MIN(date) as min_date \
+				SELECT auth, MIN(FLOOR(date - time)) as min_date \
 				FROM %splayertimes \
 				WHERE date > 1188518400 \
 				GROUP BY auth \
