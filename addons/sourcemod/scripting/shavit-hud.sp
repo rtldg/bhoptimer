@@ -1349,6 +1349,11 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 					sKey1 = "W-A-Only";
 					sKey2 = "W-D-Only";
 				}
+				if(StrEqual(gS_StyleStrings[data.iStyle].sStyleName, "A/D-Only Pro"))
+				{
+					sKey1 = "A-Only Pro";
+					sKey2 = "D-Only Pro";
+				}
 				
 				if (Shavit_GetClientKeyCombo(target) == 0)
 				{
