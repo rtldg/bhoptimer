@@ -2394,7 +2394,7 @@ public Action Command_Beamer(int client, int args)
 			1.0,  // EndWidth
 			0,    // FadeLength
 			0.0,  // Amplitude
-			{255, 255, 0, 192}, // Colour
+			{255, 0, 255, 192}, // Colour
 			20    // Speed
 		);
 
