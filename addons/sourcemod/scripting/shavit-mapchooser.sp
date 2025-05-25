@@ -2120,7 +2120,7 @@ public Action Command_ReloadMap(int client, int args)
 
 bool MapValidOrYell(int client, const char[] map)
 {
-	if (!GetMapDisplayName(map, "hi:)", 5))
+	if (!IsMapValid(map))
 	{
 		Shavit_PrintToChat(client, "Invalid map :(");
 		return false;
