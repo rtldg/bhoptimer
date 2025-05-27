@@ -1222,7 +1222,7 @@ void UpdateClanTag(int client)
 			sStyleTagKey1 = "W-A";
 			sStyleTagKey2 = "W-D";
 		}
-		if(StrEqual(gS_StyleStrings[data.iStyle].sStyleName, "A/D-Only Pro"))
+		if(StrEqual(gS_StyleStrings[gI_Style[client]].sStyleName, "A/D-Only Pro"))
 		{
 			sStyleKey1 = "A-Only Pro";
 			sStyleKey2 = "D-Only Pro";
