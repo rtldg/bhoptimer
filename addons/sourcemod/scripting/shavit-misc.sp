@@ -2448,8 +2448,34 @@ public Action Shavit_OnStart(int client)
 public void Shavit_OnWorldRecord(int client, int style, float time, int jumps, int strafes, float sync, int track)
 {
 	char sUpperCase[64];
-	strcopy(sUpperCase, 64, gS_StyleStrings[style].sStyleName);
 
+	strcopy(sUpperCase, sizeof(sUpperCase), gS_StyleStrings[style].sStyleName);
+
+	if(Shavit_GetStyleSettingBool(style, "a_or_d_only"))
+	{
+		char sStyleKey1[16] = "A-Only";
+		char sStyleKey2[16] = "D-Only";
+
+		if(StrEqual(gS_StyleStrings[style].sStyleName, "W-A/W-D-Only"))
+		{
+			sStyleKey1 = "W-A-Only";
+			sStyleKey2 = "W-D-Only";
+		}
+		if(StrEqual(gS_StyleStrings[style].sStyleName, "A/D-Only Pro"))
+		{
+			sStyleKey1 = "A-Only Pro";
+			sStyleKey2 = "D-Only Pro";
+		}
+		if (Shavit_GetClientKeyCombo(client) == 0)
+		{
+			sUpperCase = sStyleKey1;
+		}
+		else if (Shavit_GetClientKeyCombo(client) == 1)
+		{
+			sUpperCase = sStyleKey2;
+		}
+	}
+	
 	for(int i = 0; i < strlen(sUpperCase); i++)
 	{
 		if(!IsCharUpper(sUpperCase[i]))
