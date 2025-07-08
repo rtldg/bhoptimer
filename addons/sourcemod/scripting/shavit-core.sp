@@ -1391,6 +1391,12 @@ public Action Command_Style(int client, int args)
 		{
 			float time = Shavit_GetWorldRecord(iStyle, gA_Timers[client].iTimerTrack);
 			
+			char sName[64];
+			GetStyleSetting(iStyle, "name", sName, sizeof(sName));
+
+			char sMulti[8];
+			GetStyleSetting(iStyle, "rankingmultiplier", sMulti, sizeof(sMulti));
+
 			if(time > 0.0)
 			{
 				char sTime[32];
@@ -1404,25 +1410,22 @@ public Action Command_Style(int client, int args)
 					strcopy(sWR, 8, "BWR");
 				}
 
-				char sName[64];
-				GetStyleSetting(iStyle, "name", sName, sizeof(sName));
-				
 				float pb = Shavit_GetClientPB(client, iStyle, gA_Timers[client].iTimerTrack);
 				
 				if(pb > 0.0)
 				{
 					char sPb[32];
 					FormatSeconds(pb, sPb, 32, false);
-					FormatEx(sDisplay, 64, "%s - %s: %s - PB: %s", sName, sWR, sTime, sPb);
+					FormatEx(sDisplay, 64, "%s (%sx) - %s: %s - PB: %s", sName, sMulti, sWR, sTime, sPb);
 				}
 				else
 				{
-					FormatEx(sDisplay, 64, "%s - %s: %s", sName, sWR, sTime);
+					FormatEx(sDisplay, 64, "%s (%sx) - %s: %s", sName, sMulti, sWR, sTime);
 				}
 			}
 			else
 			{
-				GetStyleSetting(iStyle, "name", sDisplay, sizeof(sDisplay));
+				FormatEx(sDisplay, 64, "%s (%sx)", sName, sMulti);
 			}
 		}
 
