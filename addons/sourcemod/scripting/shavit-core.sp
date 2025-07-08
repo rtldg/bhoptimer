@@ -1416,16 +1416,16 @@ public Action Command_Style(int client, int args)
 				{
 					char sPb[32];
 					FormatSeconds(pb, sPb, 32, false);
-					FormatEx(sDisplay, 64, "%s (%sx) - %s: %s - PB: %s", sName, sMulti, sWR, sTime, sPb);
+					FormatEx(sDisplay, 64, "(%sx) %s - %s: %s - PB: %s", sMulti, sName, sWR, sTime, sPb);
 				}
 				else
 				{
-					FormatEx(sDisplay, 64, "%s (%sx) - %s: %s", sName, sMulti, sWR, sTime);
+					FormatEx(sDisplay, 64, "(%sx) %s - %s: %s", sMulti, sName, sWR, sTime);
 				}
 			}
 			else
 			{
-				FormatEx(sDisplay, 64, "%s (%sx)", sName, sMulti);
+				FormatEx(sDisplay, 64, "(%sx) %s", sMulti, sName);
 			}
 		}
 
