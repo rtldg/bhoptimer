@@ -1820,9 +1820,13 @@ void UpdateMainHUD(int client)
 		{
 			Shavit_SetClosestReplayStyle(client, Shavit_GetBhopStyle(target));
 		}
-		else
+		else if (Shavit_GetReplayFrameCount(0, huddata.iTrack) != 0)
 		{
 			Shavit_SetClosestReplayStyle(client, 0);
+		}
+		else
+		{
+			Shavit_SetClosestReplayStyle(client, 3);
 		}
 		
 		if (Shavit_GetReplayFrameCount(Shavit_GetClosestReplayStyle(client), huddata.iTrack) != 0)
