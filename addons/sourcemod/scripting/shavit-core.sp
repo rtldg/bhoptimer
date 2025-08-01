@@ -169,6 +169,7 @@ bool gB_HookedJump = false;
 char gS_LogPath[PLATFORM_MAX_PATH];
 char gS_DeleteMap[MAXPLAYERS+1][PLATFORM_MAX_PATH];
 int gI_WipePlayerID[MAXPLAYERS+1];
+int gI_WipePlayerStyle[MAXPLAYERS+1] = {-1, ...};
 char gS_Verification[MAXPLAYERS+1][8];
 bool gB_CookiesRetrieved[MAXPLAYERS+1];
 float gF_ZoneAiraccelerate[MAXPLAYERS+1];
@@ -1173,21 +1174,40 @@ public Action Command_Migration(int client, int args)
 
 public Action Command_WipePlayer(int client, int args)
 {
-	if(args == 0)
+	if (args == 0)
 	{
-		ReplyToCommand(client, "Usage: sm_wipeplayer <steamid3>\nAfter entering a SteamID, you will be prompted with a verification captcha.");
+		ReplyToCommand(client, "Usage: sm_wipeplayer <steamid3> <style>(optional)\nAfter entering a SteamID, you will be prompted with a verification captcha.");
 
 		return Plugin_Handled;
 	}
 
-	char sArgString[32];
-	GetCmdArgString(sArgString, 32);
+	int iStyle = -1;
+	char sArgString[32], sArgStyle[4], sStyleChar[32];
+	GetCmdArg(1, sArgString, 32);
 
-	if(strlen(gS_Verification[client]) == 0 || !StrEqual(sArgString, gS_Verification[client]))
+	if (args == 2)
+	{
+		GetCmdArg(2, sArgStyle, 4);
+		iStyle = StringToInt(sArgStyle);
+		if(0 <= iStyle <= gI_Styles)
+		{
+			gI_WipePlayerStyle[client] = StringToInt(sArgStyle);
+			GetStyleSetting(iStyle, "name", sStyleChar, sizeof(sStyleChar));
+		}
+		else
+		{
+			gI_WipePlayerStyle[client] = -1;
+			Shavit_PrintToChat(client, "Entered style ID (%s) is invalid. The range for valid styles is 0 to %d.", sArgStyle, gI_Styles-1);
+
+			return Plugin_Handled;
+		}
+	}
+
+	if (strlen(gS_Verification[client]) == 0 || !StrEqual(sArgString, gS_Verification[client]))
 	{
 		gI_WipePlayerID[client] = SteamIDToAccountID(sArgString);
 
-		if(gI_WipePlayerID[client] == 0)
+		if (gI_WipePlayerID[client] == 0)
 		{
 			Shavit_PrintToChat(client, "Entered SteamID (%s) is invalid. The range for valid SteamIDs is [U:1:1] to [U:1:4294967295].", sArgString);
 
@@ -1197,24 +1217,34 @@ public Action Command_WipePlayer(int client, int args)
 		char sAlphabet[] = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#";
 		strcopy(gS_Verification[client], 8, "");
 
-		for(int i = 0; i < 5; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			gS_Verification[client][i] = sAlphabet[GetRandomInt(0, sizeof(sAlphabet) - 1)];
 		}
 
-		Shavit_PrintToChat(client, "Preparing to delete all user data for SteamID %s[U:1:%u]%s. To confirm, enter %s!wipeplayer %s",
-			gS_ChatStrings.sVariable, gI_WipePlayerID[client], gS_ChatStrings.sText, gS_ChatStrings.sVariable2, gS_Verification[client]);
+		Shavit_PrintToChat(client, "Preparing to delete all user data for SteamID %s[U:1:%u]%s%s%s%s%s. To confirm, enter %s!wipeplayer %s",
+			gS_ChatStrings.sVariable, gI_WipePlayerID[client], gS_ChatStrings.sText,
+			gI_WipePlayerStyle[client] > -1 ? " on style " : "",
+			gI_WipePlayerStyle[client] > -1 ? gS_ChatStrings.sStyle : "",
+			gI_WipePlayerStyle[client] > -1 ? sStyleChar : "",
+			gI_WipePlayerStyle[client] > -1 ? gS_ChatStrings.sText : "",
+			gS_ChatStrings.sVariable2, gS_Verification[client]);
 	}
 	else
 	{
-		Shavit_PrintToChat(client, "Deleting data for SteamID %s[U:1:%u]%s...",
-			gS_ChatStrings.sVariable, gI_WipePlayerID[client], gS_ChatStrings.sText);
+		Shavit_PrintToChat(client, "Deleting data for SteamID %s[U:1:%u]%s%s%s%s%s...",
+			gS_ChatStrings.sVariable, gI_WipePlayerID[client], gS_ChatStrings.sText,
+			gI_WipePlayerStyle[client] > -1 ? " on style " : "",
+			gI_WipePlayerStyle[client] > -1 ? gS_ChatStrings.sStyle : "",
+			gI_WipePlayerStyle[client] > -1 ? sStyleChar : "",
+			gI_WipePlayerStyle[client] > -1 ? gS_ChatStrings.sText : "");
 
-		Shavit_LogMessage("%L - wiped [U:1:%u]'s player data", client, gI_WipePlayerID[client]);
-		DeleteUserData(client, gI_WipePlayerID[client]);
+		Shavit_LogMessage("%L - wiped [U:1:%u]'s player data%s%s", client, gI_WipePlayerID[client], gI_WipePlayerStyle[client] > -1 ? " on style " : "", gI_WipePlayerStyle[client] > -1 ? sStyleChar : "");
+		DeleteUserData(client, gI_WipePlayerID[client], gI_WipePlayerStyle[client]);
 
 		strcopy(gS_Verification[client], 8, "");
 		gI_WipePlayerID[client] = -1;
+		gI_WipePlayerStyle[client] = -1;
 	}
 
 	return Plugin_Handled;
@@ -1231,12 +1261,24 @@ public void Trans_DeleteRestOfUserSuccess(Database db, DataPack hPack, int numQu
 	hPack.Reset();
 	int client = hPack.ReadCell();
 	int iSteamID = hPack.ReadCell();
+	int iStyle = hPack.ReadCell();
 	delete hPack;
 
 	Shavit_ReloadLeaderboards();
 
-	Shavit_LogMessage("%L - wiped user data for [U:1:%u].", client, iSteamID);
-	Shavit_PrintToChat(client, "Finished wiping timer data for user %s[U:1:%u]%s.", gS_ChatStrings.sVariable, iSteamID, gS_ChatStrings.sText);
+	char sStyleChar[32];
+	if(iStyle > -1)
+	{
+		GetStyleSetting(iStyle, "name", sStyleChar, sizeof(sStyleChar));
+	}
+
+	Shavit_LogMessage("%L - wiped user data for [U:1:%u]%s%s.", client, iSteamID, iStyle > -1 ? " on style " : "", iStyle > -1 ? sStyleChar : "");
+	Shavit_PrintToChat(client, "Finished wiping timer data for user %s[U:1:%u]%s%s%s%s%s.",
+		gS_ChatStrings.sVariable, iSteamID, gS_ChatStrings.sText,
+		iStyle > -1 ? " on style " : "",
+		iStyle > -1 ? gS_ChatStrings.sStyle : "",
+		iStyle > -1 ? sStyleChar : "",
+		iStyle > -1 ? gS_ChatStrings.sText : "");
 }
 
 public void Trans_DeleteRestOfUserFailed(Database db, DataPack hPack, int numQueries, const char[] error, int failIndex, any[] queryData)
@@ -1248,24 +1290,30 @@ public void Trans_DeleteRestOfUserFailed(Database db, DataPack hPack, int numQue
 	LogError("Timer error! Failed to wipe user data (wipe | delete user data/times, id [U:1:%u]). Reason: %s", iSteamID, error);
 }
 
-void DeleteRestOfUser(int iSteamID, DataPack hPack)
+void DeleteRestOfUser(int iSteamID, int iStyle, DataPack hPack)
 {
 	Transaction trans = new Transaction();
-	char sQuery[256];
+	char sQuery[256], sStyle[4];
+	IntToString(iStyle, sStyle, 4);
 
-	FormatEx(sQuery, 256, "DELETE FROM %splayertimes WHERE auth = %d;", gS_MySQLPrefix, iSteamID);
+	FormatEx(sQuery, 256, "DELETE FROM %splayertimes WHERE auth = %d%s%s;", gS_MySQLPrefix, iSteamID, iStyle > -1 ? " AND style = " : "", iStyle > -1 ? sStyle : "");
 	AddQueryLog(trans, sQuery);
-	FormatEx(sQuery, 256, "DELETE FROM %susers WHERE auth = %d;", gS_MySQLPrefix, iSteamID);
-	AddQueryLog(trans, sQuery);
+
+	if(iStyle == -1)
+	{
+		FormatEx(sQuery, 256, "DELETE FROM %susers WHERE auth = %d;", gS_MySQLPrefix, iSteamID);
+		AddQueryLog(trans, sQuery);
+	}
 
 	gH_SQL.Execute(trans, Trans_DeleteRestOfUserSuccess, Trans_DeleteRestOfUserFailed, hPack);
 }
 
-void DeleteUserData(int client, const int iSteamID)
+void DeleteUserData(int client, const int iSteamID, const int iStyle)
 {
 	DataPack hPack = new DataPack();
 	hPack.WriteCell(client);
 	hPack.WriteCell(iSteamID);
+	hPack.WriteCell(iStyle);
 	char sQuery[512];
 
 	FormatEx(sQuery, sizeof(sQuery),
@@ -1280,6 +1328,7 @@ public void SQL_DeleteUserData_GetRecords_Callback(Database db, DBResultSet resu
 	hPack.Reset();
 	hPack.ReadCell(); /*int client = */
 	int iSteamID = hPack.ReadCell();
+	int iStyle = hPack.ReadCell();
 
 	if(results == null)
 	{
@@ -1297,10 +1346,13 @@ public void SQL_DeleteUserData_GetRecords_Callback(Database db, DBResultSet resu
 		int track = results.FetchInt(2);
 		results.FetchString(3, map, sizeof(map));
 
-		Shavit_DeleteWR(style, track, map, iSteamID, id, false, false);
+		if(iStyle == -1 || iStyle == style)
+		{
+			Shavit_DeleteWR(style, track, map, iSteamID, id, false, false);
+		}
 	}
 
-	DeleteRestOfUser(iSteamID, hPack);
+	DeleteRestOfUser(iSteamID, iStyle, hPack);
 }
 
 public Action Command_AutoBhop(int client, int args)
@@ -1359,7 +1411,7 @@ public Action Command_Style(int client, int args)
 	}
 
 	Menu menu = new Menu(StyleMenu_Handler);
-	menu.SetTitle("%T", "StyleMenuTitle", client);
+	menu.SetTitle("%T\n ", "StyleMenuTitle", client);
 
 	int iStyleCount = Shavit_GetStyleCount();
 	int iOrderedStyles[STYLE_LIMIT];
@@ -1380,13 +1432,13 @@ public Action Command_Style(int client, int args)
 		char sInfo[8];
 		IntToString(iStyle, sInfo, 8);
 
-		char sDisplay[64];
+		char sDisplay[128];
 
 		if(GetStyleSettingBool(iStyle, "unranked"))
 		{
 			char sName[64];
 			GetStyleSetting(iStyle, "name", sName, sizeof(sName));
-			FormatEx(sDisplay, 64, "%T %s", "StyleUnranked", client, sName);
+			FormatEx(sDisplay, 128, "%T %s", "StyleUnranked", client, sName);
 		}
 		else
 		{
@@ -1412,22 +1464,66 @@ public Action Command_Style(int client, int args)
 				}
 
 				float pb = Shavit_GetClientPB(client, iStyle, gA_Timers[client].iTimerTrack);
-				
+
 				if(pb > 0.0)
 				{
 					char sPb[32];
 					FormatSeconds(pb, sPb, 32, false);
-					FormatEx(sDisplay, 64, "(%sx) %s - %s: %s - PB: %s", sMulti, sName, sWR, sTime, sPb);
+					FormatEx(sDisplay, 128, "(%sx) %s - %s: %s - PB: %s", sMulti, sName, sWR, sTime, sPb);
 				}
 				else
 				{
-					FormatEx(sDisplay, 64, "(%sx) %s - %s: %s", sMulti, sName, sWR, sTime);
+					FormatEx(sDisplay, 128, "(%sx) %s - %s: %s", sMulti, sName, sWR, sTime);
 				}
 			}
 			else
 			{
-				FormatEx(sDisplay, 64, "(%sx) %s", sMulti, sName);
+				FormatEx(sDisplay, 128, "(%sx) %s", sMulti, sName);
 			}
+
+			/*if(Shavit_GetStyleSettingBool(iStyle, "kzcheckpoints"))
+			{
+				int teleStyle = Shavit_GetStyleSettingInt(iStyle, "kzcheckpoints_ontele");
+				if(teleStyle > -1)
+				{
+					time = Shavit_GetWorldRecord(teleStyle, gA_Timers[client].iTimerTrack);
+
+					GetStyleSetting(teleStyle, "name", sName, sizeof(sName));
+
+					GetStyleSetting(teleStyle, "rankingmultiplier", sMulti, sizeof(sMulti));
+
+					if(time > 0.0)
+					{
+						char sTime[32];
+						FormatSeconds(time, sTime, 32, false);
+
+						char sWR[8];
+						strcopy(sWR, 8, "WR");
+
+						if (gA_Timers[client].iTimerTrack >= Track_Bonus)
+						{
+							strcopy(sWR, 8, "BWR");
+						}
+
+						float pb = Shavit_GetClientPB(client, teleStyle, gA_Timers[client].iTimerTrack);
+
+						if (pb > 0.0)
+						{
+							char sPb[32];
+							FormatSeconds(pb, sPb, 32, false);
+							Format(sDisplay, 128, "%s\n    (%sx) %s %s: %s - PB: %s\n ", sDisplay, sMulti, "TP", sWR, sTime, sPb);
+						}
+						else
+						{
+							Format(sDisplay, 128, "%s\n    (%sx) %s %s: %s\n ", sDisplay, sMulti, "TP", sWR, sTime);
+						}
+					}
+					else
+					{
+						Format(sDisplay, 128, "%s\n    (%sx) %s\n ", sDisplay, sMulti, "TP");
+					}
+				}
+			}*/
 		}
 
 		menu.AddItem(sInfo, sDisplay, (gA_Timers[client].bsStyle == iStyle || !Shavit_HasStyleAccess(client, iStyle))? ITEMDRAW_DISABLED:ITEMDRAW_DEFAULT);
