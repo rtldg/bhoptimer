@@ -82,6 +82,6 @@
 	}
 	"ChatRanksMenu_SampleText"
 	{
-		"en"		"The quick brown fox jumps over the lazy dog"
+		"en"		"Sphinx of black quartz, judge my vow"
 	}
 }
