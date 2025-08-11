@@ -277,6 +277,11 @@ public void OnPluginStart()
 		{
 			g_bTiersAssigned = true;
 		}
+
+		for(int i = 1; i < MaxClients; i++)
+		{
+			OnClientAuthorized(i);
+		}
 	}
 }
 
@@ -333,6 +338,46 @@ public void OnConfigsExecuted()
 	// reload maplist array
 	LoadMapList();
 	// cache the nominate menu so that it isn't being built every time player opens it
+}
+
+public void OnClientAuthorized(int client, const char[] auth)
+{
+	if (gH_SQL && !IsFakeClient(client))
+	{
+		g_mVoteMapsCompleted[client].Clear;
+
+		int iSteamID = GetSteamAccountID(client);
+		if(iSteamID == 0)
+			return;
+
+		char sQuery[512];
+		FormatEx(sQuery, sizeof(sQuery), "SELECT DISTINCT map FROM %splayertimes WHERE auth = %d AND track = 0", prefix, iSteamID)
+		QueryLog(g_hDatabase, SQL_OnClientAuthorized_Callback, sQuery, GetClientSerial(client), DBPrio_High);
+	}
+}
+
+public void SQL_OnClientAuthorized_Callback(Database db, DBResultSet results, const char[] error, any data)
+{
+	if(results == null)
+	{
+		LogError("[shavit-mapchooser] - (GetVoteMapCompleted_Callback) - %s", error);
+		delete data;
+		return;
+	}
+
+	int client = GetClientFromSerial(data);
+	if(client <= 0 || client >= MaxClients)
+		return;
+
+	if(SQL_GetRowCount(hndl) == 0)
+		return;
+
+	char map[PLATFORM_MAX_PATH];
+	while(results.FetchRow())
+	{
+		results.FetchString(0, map,sizeof(map));
+		g_mVoteMapsCompleted[client].SetValue(map, true, true);
+	}
 }
 
 public void OnMapEnd()
@@ -711,8 +756,6 @@ void InitiateMapVote(MapChange when)
 		g_aNominateList.GetString(i, map, sizeof(map));
 		LessStupidGetMapDisplayName(map, mapdisplay, sizeof(mapdisplay));
 
-		GetVoteMapCompleted(mapdisplay);
-
 		if(tiersMap && g_cvMapVoteShowTier.BoolValue)
 		{
 			int tier = 0;
@@ -777,8 +820,6 @@ void InitiateMapVote(MapChange when)
 
 		LowercaseString(mapdisplay);
 
-		GetVoteMapCompleted(mapdisplay);
-
 		if(tiersMap && g_cvMapVoteShowTier.BoolValue)
 		{
 			int tier = 0;
@@ -842,45 +883,6 @@ void InitiateMapVote(MapChange when)
 	menu.NoVoteButton = g_cvMapVoteEnableNoVote.BoolValue;
 	menu.ExitButton = false;
 	menu.DisplayVoteToAll(RoundFloat(g_cvMapVoteDuration.FloatValue * 60.0));
-}
-
-public void GetVoteMapCompleted(char[] map)
-{
-	for(int i = 1; i <= MaxClients; i++)
-	{
-		if(IsValidClient(i) && !IsFakeClient(i))
-		{
-			DataPack pack = new DataPack();
-			pack.WriteCell(i);
-			pack.WriteString(map);
-
-			char sQuery[128];
-			FormatEx(sQuery, sizeof(sQuery), "SELECT * FROM %splayertimes WHERE map = '%s' AND auth = %d AND track = 0", i, prefix, map, GetSteamAccountID(i))
-			QueryLog(g_hDatabase, SQL_GetVoteMapCompleted_Callback, sQuery, pack, DBPrio_High);
-		}
-	}
-}
-
-public void SQL_GetVoteMapCompleted_Callback(Database db, DBResultSet results, const char[] error, any data)
-{
-	if(results == null)
-	{
-		LogError("[shavit-mapchooser] - (GetVoteMapCompleted_Callback) - %s", error);
-		delete data;
-		return;
-	}
-
-	char map[32];
-	data.Reset();
-	int client = data.ReadCell();
-	data.ReadString(map, sizeof(map));
-
-	if(SQL_GetRowCount(hndl) != 0)
-		g_mVoteMapsCompleted[client].SetValue(map, true, true);
-	else
-		g_mVoteMapsCompleted[client].SetValue(map, false, true);
-
-	delete data;
 }
 
 public Action Timer_VoteDelay(Handle timer, any data)
@@ -1419,6 +1421,10 @@ void SMC_NominateMatches(int client, const char[] mapname)
 				Format(mapdisplay, sizeof(mapdisplay), "%s | T%i", mapdisplay, tier);
 			}
 
+			bool completed;
+			g_mVoteMapsCompleted[client].GetValue(map, completed);
+			Format(mapdisplay, sizeof(mapdisplay), "%s [%s]", mapdisplay, completed ? "X" : "  ");
+
 			subNominateMenu.AddItem(entry, mapdisplay);
 		}
 	}
@@ -1662,7 +1668,7 @@ void CreateNominateMenu()
 	}
 
 	delete g_hNominateMenu;
-	g_hNominateMenu = new Menu(NominateMenuHandler);
+	g_hNominateMenu = new Menu(NominateMenuHandler, MENU_ACTIONS_ALL);
 
 	char buffer[128];
 	Format(buffer, sizeof(buffer), "%T", "Nominate", LANG_SERVER);
@@ -1809,7 +1815,7 @@ void InitTierMenus(int min, int max)
 
 	for(int i = min; i <= max; i++)
 	{
-		Menu TierMenu = new Menu(NominateMenuHandler);
+		Menu TierMenu = new Menu(NominateMenuHandler, MENU_ACTIONS_ALL);
 		
 		TierMenu.SetTitle("%T\nTier \"%i\" Maps\n ", "Nominate", LANG_SERVER, i);
 		
@@ -1866,6 +1872,16 @@ public int NominateMenuHandler(Menu menu, MenuAction action, int param1, int par
 		menu.GetItem(param2, mapname, sizeof(mapname));
 
 		Nominate(param1, mapname);
+	}
+	if(action == MenuAction_DisplayItem)
+	{
+		char map[PLATFORM_MAX_PATH], buffer[255];
+		menu.GetItem(param2, map, sizeof(map));
+
+		bool completed;
+		g_mVoteMapsCompleted[client].GetValue(map, completed);
+		FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
+		return RedrawMenuItem(buffer);
 	}
 	else if(action == MenuAction_Cancel && param2 == MenuCancel_ExitBack && GetConVarBool(g_cvEnhancedMenu))
 	{
