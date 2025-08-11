@@ -141,6 +141,8 @@ Handle g_hForward_OnUnRTV = null;
 Handle g_hForward_OnSuccesfulRTV = null;
 
 StringMap g_mMapList;
+StringMap g_mVoteMapsCompleted[MAXPLAYERS+1];
+
 bool gB_Late = false;
 EngineVersion gEV_Type = Engine_Unknown;
 
@@ -194,6 +196,8 @@ public void OnPluginStart()
 	g_aOldMaps = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH));
 
 	g_mMapList = new StringMap();
+	for(int i=1; i < MaxClients; i++)
+		g_mVoteMapsCompleted[i] = new StringMap();
 
 	g_cvMapListType = new Convar("smc_maplist_type", "2", "Where the plugin should get the map list from.\n0 - zoned maps from database\n1 - from maplist file (mapcycle.txt)\n2 - from maps folder\n3 - from zoned maps and confirmed by maplist file\n4 - from zoned maps and confirmed by maps folder", _, true, 0.0, true, float(MapListLAST)-1.0);
 	g_cvMatchFuzzyMap = new Convar("smc_match_fuzzy", "1", "If set to 1, the plugin will accept partial map matches from the database. Useful for workshop maps, bad for duplicate map names", _, true, 0.0, true, 1.0);
@@ -707,6 +711,8 @@ void InitiateMapVote(MapChange when)
 		g_aNominateList.GetString(i, map, sizeof(map));
 		LessStupidGetMapDisplayName(map, mapdisplay, sizeof(mapdisplay));
 
+		GetVoteMapCompleted(mapdisplay);
+
 		if(tiersMap && g_cvMapVoteShowTier.BoolValue)
 		{
 			int tier = 0;
@@ -771,6 +777,8 @@ void InitiateMapVote(MapChange when)
 
 		LowercaseString(mapdisplay);
 
+		GetVoteMapCompleted(mapdisplay);
+
 		if(tiersMap && g_cvMapVoteShowTier.BoolValue)
 		{
 			int tier = 0;
@@ -834,6 +842,45 @@ void InitiateMapVote(MapChange when)
 	menu.NoVoteButton = g_cvMapVoteEnableNoVote.BoolValue;
 	menu.ExitButton = false;
 	menu.DisplayVoteToAll(RoundFloat(g_cvMapVoteDuration.FloatValue * 60.0));
+}
+
+public void GetVoteMapCompleted(char[] map)
+{
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(IsValidClient(i) && !IsFakeClient(i))
+		{
+			DataPack pack = new DataPack();
+			pack.WriteCell(i);
+			pack.WriteString(map);
+
+			char sQuery[128];
+			FormatEx(sQuery, sizeof(sQuery), "SELECT * FROM %splayertimes WHERE map = '%s' AND auth = %d AND track = 0", i, prefix, map, GetSteamAccountID(i))
+			QueryLog(g_hDatabase, SQL_GetVoteMapCompleted_Callback, sQuery, pack, DBPrio_High);
+		}
+	}
+}
+
+public void SQL_GetVoteMapCompleted_Callback(Database db, DBResultSet results, const char[] error, any data)
+{
+	if(results == null)
+	{
+		LogError("[shavit-mapchooser] - (GetVoteMapCompleted_Callback) - %s", error);
+		delete data;
+		return;
+	}
+
+	char map[32];
+	data.Reset();
+	int client = data.ReadCell();
+	data.ReadString(map, sizeof(map));
+
+	if(SQL_GetRowCount(hndl) != 0)
+		g_mVoteMapsCompleted[client].SetValue(map, true, true);
+	else
+		g_mVoteMapsCompleted[client].SetValue(map, false, true);
+
+	delete data;
 }
 
 public Action Timer_VoteDelay(Handle timer, any data)
@@ -1062,11 +1109,11 @@ public int Handler_MapVoteMenu(Menu menu, MenuAction action, int param1, int par
 
 		case MenuAction_DisplayItem:
 		{
+			char map[PLATFORM_MAX_PATH], buffer[255];
+			menu.GetItem(param2, map, sizeof(map));
+
 			if(menu.ItemCount - 1 == param2)
 			{
-				char map[PLATFORM_MAX_PATH], buffer[255];
-				menu.GetItem(param2, map, sizeof(map));
-
 				if(strcmp(map, "extend", false) == 0)
 				{
 					FormatEx(buffer, sizeof(buffer), "%T", "Extend Current Map", param1);
@@ -1082,6 +1129,13 @@ public int Handler_MapVoteMenu(Menu menu, MenuAction action, int param1, int par
 					FormatEx(buffer, sizeof(buffer), "%T", "Dont Change", param1);
 					return RedrawMenuItem(buffer);
 				}
+			}
+			else
+			{
+				bool completed;
+				g_mVoteMapsCompleted[client].GetValue(map, completed);
+				FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
+				return RedrawMenuItem(buffer);
 			}
 		}
 
