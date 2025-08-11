@@ -1132,13 +1132,11 @@ public int Handler_MapVoteMenu(Menu menu, MenuAction action, int param1, int par
 					return RedrawMenuItem(buffer);
 				}
 			}
-			else
-			{
-				bool completed;
-				g_mVoteMapsCompleted[client].GetValue(map, completed);
-				FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
-				return RedrawMenuItem(buffer);
-			}
+
+			bool completed;
+			g_mVoteMapsCompleted[client].GetValue(map, completed);
+			FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
+			return RedrawMenuItem(buffer);
 		}
 
 		case MenuAction_VoteCancel:
