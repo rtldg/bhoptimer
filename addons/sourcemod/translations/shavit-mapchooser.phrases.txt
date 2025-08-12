@@ -414,6 +414,24 @@
 
 	}
 
+	"Timeleft"
+
+	{
+
+		"en"			"Timeleft"
+
+	}
+
+	"TimeleftForever"
+
+	{
+
+		"#format"		"{1:s}"
+
+		"en"			"Timeleft: {1}Forever"
+
+	}
+
 	"LoadUnzoned"
 
 	{
