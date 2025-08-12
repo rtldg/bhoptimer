@@ -280,7 +280,8 @@ public void OnPluginStart()
 
 		for(int i = 1; i < MaxClients; i++)
 		{
-			OnClientAuthorized(i);
+			if(IsValidClient(i) && !IsFakeClient(i) && IsClientAuthorized(i))
+				OnClientAuthorized(i);
 		}
 	}
 }
@@ -340,28 +341,27 @@ public void OnConfigsExecuted()
 	// cache the nominate menu so that it isn't being built every time player opens it
 }
 
-public void OnClientAuthorized(int client, const char[] auth)
+public void OnClientAuthorized(int client)
 {
-	if (gH_SQL && !IsFakeClient(client))
+	if (g_hDatabase && !IsFakeClient(client))
 	{
-		g_mVoteMapsCompleted[client].Clear;
+		g_mVoteMapsCompleted[client].Clear();
 
 		int iSteamID = GetSteamAccountID(client);
 		if(iSteamID == 0)
 			return;
 
 		char sQuery[512];
-		FormatEx(sQuery, sizeof(sQuery), "SELECT DISTINCT map FROM %splayertimes WHERE auth = %d AND track = 0", prefix, iSteamID)
+		FormatEx(sQuery, sizeof(sQuery), "SELECT DISTINCT map FROM %splayertimes WHERE auth = %d AND track = 0", g_cSQLPrefix, iSteamID);
 		QueryLog(g_hDatabase, SQL_OnClientAuthorized_Callback, sQuery, GetClientSerial(client), DBPrio_High);
 	}
 }
 
 public void SQL_OnClientAuthorized_Callback(Database db, DBResultSet results, const char[] error, any data)
 {
-	if(results == null)
+	if(results == null || db == INVALID_HANDLE)
 	{
 		LogError("[shavit-mapchooser] - (GetVoteMapCompleted_Callback) - %s", error);
-		delete data;
 		return;
 	}
 
@@ -369,8 +369,8 @@ public void SQL_OnClientAuthorized_Callback(Database db, DBResultSet results, co
 	if(client <= 0 || client >= MaxClients)
 		return;
 
-	if(SQL_GetRowCount(hndl) == 0)
-		return;
+	//if(SQL_GetRowCount(db) == 0)
+	//	return;
 
 	char map[PLATFORM_MAX_PATH];
 	while(results.FetchRow())
@@ -1134,7 +1134,7 @@ public int Handler_MapVoteMenu(Menu menu, MenuAction action, int param1, int par
 			}
 
 			bool completed;
-			g_mVoteMapsCompleted[client].GetValue(map, completed);
+			g_mVoteMapsCompleted[param1].GetValue(map, completed);
 			FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
 			return RedrawMenuItem(buffer);
 		}
@@ -1877,7 +1877,7 @@ public int NominateMenuHandler(Menu menu, MenuAction action, int param1, int par
 		menu.GetItem(param2, map, sizeof(map));
 
 		bool completed;
-		g_mVoteMapsCompleted[client].GetValue(map, completed);
+		g_mVoteMapsCompleted[param1].GetValue(map, completed);
 		FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
 		return RedrawMenuItem(buffer);
 	}
