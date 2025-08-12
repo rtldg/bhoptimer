@@ -418,7 +418,7 @@
 
 	{
 
-		"en"			"Timeleft"
+		"en"			"Time left"
 
 	}
 
@@ -428,7 +428,7 @@
 
 		"#format"		"{1:s}"
 
-		"en"			"Timeleft: {1}Forever"
+		"en"			"Time left: {1}Forever"
 
 	}
 
