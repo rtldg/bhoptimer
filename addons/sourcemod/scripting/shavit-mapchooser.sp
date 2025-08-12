@@ -57,6 +57,7 @@ Convar g_cvRTVDelayTime;
 Convar g_cvNominateDelayTime;
 Convar g_cvVoteDelayTime;
 Convar g_cvNextmap;
+Convar g_cvTimeleft;
 
 Convar g_cvHideRTVChat;
 
@@ -222,7 +223,8 @@ public void OnPluginStart()
 	g_cvRTVRequiredPercentage = new Convar("smc_rtv_required_percentage", "50", "Percentage of players who have RTVed before a map vote is initiated", _, true, 1.0, true, 100.0);
 	g_cvHideRTVChat = new Convar("smc_hide_rtv_chat", "1", "Whether to hide 'rtv', 'rockthevote', 'unrtv', 'nextmap', and 'nominate' from chat.");
 	g_cvVoteDelayTime = new Convar("smc_vote_delay", "3", "Time in seconds after the map vote menu opens before players that had a menu open already can interact with it", _, true, 0.0, false);
-	g_cvNextmap = new Convar("smc_nextmap_enabled", "0", "Enable the nextmap command, replacing sourcemod's default nextmap plugin", _, true, 0.0, true, 1.0);
+	g_cvNextmap = new Convar("smc_nextmap_enabled", "0", "Enable the nextmap command, useful when not using some default SM plugins", _, true, 0.0, true, 1.0);
+	g_cvTimeleft = new Convar("smc_timeleft_enabled", "0", "Enable the timeleft command, useful when not using some default SM plugins", _, true, 0.0, true, 1.0);
 	
 	g_cvMapVoteRunOff = new Convar("smc_mapvote_runoff", "1", "Hold run off votes if winning choice is less than a certain margin", _, true, 0.0, true, 1.0);
 	g_cvMapVoteRunOffPerc = new Convar("smc_mapvote_runoffpercent", "50", "If winning choice has less than this percent of votes, hold a runoff", _, true, 0.0, true, 100.0);
@@ -261,6 +263,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_nominatedmaps", Command_NomList, "Shows currently nominated maps");
 	RegConsoleCmd("sm_nominations", Command_NomList, "Shows currently nominated maps");
 	RegConsoleCmd("sm_nextmap", Command_NextMap, "Shows next map");
+	RegConsoleCmd("sm_timeleft", Command_Timeleft, "Shows time left on current map");
 
 	RegAdminCmd("sm_smcdebug", Command_Debug, ADMFLAG_RCON);
 
@@ -690,6 +693,14 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
 		ReplySource old = SetCmdReplySource(SM_REPLY_TO_CHAT);
 
 		Command_NextMap(client, 0);
+
+		SetCmdReplySource(old);
+	}
+	else if(StrEqual(sArgs, "timeleft", false) && g_cvTimeleft.BoolValue)
+	{
+		ReplySource old = SetCmdReplySource(SM_REPLY_TO_CHAT);
+
+		Command_Timeleft(client, 0);
 
 		SetCmdReplySource(old);
 	}
@@ -2168,6 +2179,51 @@ public Action Command_NextMap(int client, int args)
 		else
 		{
 			Shavit_PrintToChat(client, "%t", "NextmapNone", gS_ChatStrings.sWarning, gS_ChatStrings.sText);
+		}
+		
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
+}
+
+public Action Command_Timeleft(int client, int args)
+{
+	if(g_cvTimeleft.BoolValue)
+	{
+		int timeleft;
+		if(GetMapTimeLeft(timeleft) && timeleft > 0)
+		{
+			int iHours = 0;
+
+			if(timeleft > 3600)
+			{
+				iHours = timeleft / 3600;
+				timeleft %= 3600;
+			}
+
+			int iMinutes = 0;
+
+			if(timeleft >= 60)
+			{
+				iMinutes = timeleft / 60;
+				timeleft %= 60;
+			}
+
+			char sTimeleft[32];
+			
+			if (iHours > 0)
+				FormatEx(sTimeleft, sizeof(sTimeleft), "%ih %im %is", iHours, iMinutes, timeleft);
+			else if(iMinutes > 0)
+				FormatEx(sTimeleft, sizeof(sTimeleft), "%im %is", iMinutes, timeleft);
+			else
+				FormatEx(sTimeleft, sizeof(sTimeleft), "%is", timeleft);
+
+			Shavit_PrintToChat(client, "%t: %s%s", "Timeleft", gS_ChatStrings.sVariable, sTimeleft);
+		}
+		else
+		{
+			Shavit_PrintToChat(client, "%t", "TimeleftForever", gS_ChatStrings.sVariable);
 		}
 		
 		return Plugin_Handled;
