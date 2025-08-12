@@ -1135,7 +1135,18 @@ public int Handler_MapVoteMenu(Menu menu, MenuAction action, int param1, int par
 
 			bool completed;
 			g_mVoteMapsCompleted[param1].GetValue(map, completed);
-			FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
+
+			StringMap tiersMap = null;
+			if(gB_Rankings) tiersMap = Shavit_GetMapTiers();
+			if(tiersMap && g_cvMapVoteShowTier.BoolValue)
+			{
+				int tier = 0;
+				tiersMap.GetValue(map, tier);
+				FormatEx(buffer, sizeof(buffer), "[%s] [T%d] %s", completed ? "X" : "  ", tier, map);
+			}
+			else
+				FormatEx(buffer, sizeof(buffer), "[%s] %s", completed ? "X" : "  ", map);
+
 			return RedrawMenuItem(buffer);
 		}
 
@@ -1416,12 +1427,12 @@ void SMC_NominateMatches(int client, const char[] mapname)
 					continue;
 				}
 
-				Format(mapdisplay, sizeof(mapdisplay), "%s | T%i", mapdisplay, tier);
+				Format(mapdisplay, sizeof(mapdisplay), "[T%i] %s", tier, mapdisplay);
 			}
 
 			bool completed;
 			g_mVoteMapsCompleted[client].GetValue(map, completed);
-			Format(mapdisplay, sizeof(mapdisplay), "%s [%s]", mapdisplay, completed ? "X" : "  ");
+			Format(mapdisplay, sizeof(mapdisplay), "[%s] %s", completed ? "X" : "  ", mapdisplay);
 
 			subNominateMenu.AddItem(entry, mapdisplay);
 		}
@@ -1878,7 +1889,18 @@ public int NominateMenuHandler(Menu menu, MenuAction action, int param1, int par
 
 		bool completed;
 		g_mVoteMapsCompleted[param1].GetValue(map, completed);
-		FormatEx(buffer, sizeof(buffer), "%s [%s]", map, completed ? "X" : "  ");
+
+		StringMap tiersMap = null;
+		if(gB_Rankings) tiersMap = Shavit_GetMapTiers();
+		if(tiersMap && g_cvMapVoteShowTier.BoolValue)
+		{
+			int tier = 0;
+			tiersMap.GetValue(map, tier);
+			FormatEx(buffer, sizeof(buffer), "[%s] [T%d] %s", completed ? "X" : "  ", tier, map);
+		}
+		else
+			FormatEx(buffer, sizeof(buffer), "[%s] %s", completed ? "X" : "  ", map);
+
 		return RedrawMenuItem(buffer);
 	}
 	else if(action == MenuAction_Cancel && param2 == MenuCancel_ExitBack && GetConVarBool(g_cvEnhancedMenu))
