@@ -172,6 +172,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
 	CreateNative("Shavit_GetMapsArrayList", Native_GetMapsArrayList);
 	CreateNative("Shavit_GetMapsStringMap", Native_GetMapsStringMap);
+	CreateNative("Shavit_Nominate", Native_Nominate);
 
 	g_hForward_OnRTV = CreateGlobalForward("SMC_OnRTV", ET_Event, Param_Cell);
 	g_hForward_OnUnRTV = CreateGlobalForward("SMC_OnUnRTV", ET_Event, Param_Cell);
@@ -2679,4 +2680,11 @@ public any Native_GetMapsArrayList(Handle plugin, int numParams)
 public any Native_GetMapsStringMap(Handle plugin, int numParams)
 {
 	return g_mMapList;
+}
+
+public void Native_Nominate(Handle plugin, int numParams)
+{
+	char map[PLATFORM_MAX_PATH];
+	GetNativeString(2, map, sizeof(map));
+	Command_Nominate_Internal(GetNativeCell(1), map);
 }
