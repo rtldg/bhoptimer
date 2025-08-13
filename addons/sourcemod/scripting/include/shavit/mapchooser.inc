@@ -1,6 +1,6 @@
 /*
  * shavit's Timer - mapchooser.inc file
- * by: SlidyBat, KiD Fearless, mbhound, rtldg
+ * by: SlidyBat, KiD Fearless, mbhound, rtldg, olivia
  *
  * This file is part of shavit's Timer (https://github.com/shavitush/bhoptimer)
  *
@@ -64,6 +64,13 @@ native ArrayList Shavit_GetMapsArrayList();
  */
 native StringMap Shavit_GetMapsStringMap();
 
+/**
+ * Allows a player to nominate a map.
+ *
+ * @noreturn
+ */
+native void Shavit_Nominate(int client, char[] map);
+
 public SharedPlugin __pl_shavit_mapchooser =
 {
 	name = "shavit-mapchooser",
@@ -80,5 +87,6 @@ public void __pl_shavit_mapchooser_SetNTVOptional()
 {
 	MarkNativeAsOptional("Shavit_GetMapsArrayList");
 	MarkNativeAsOptional("Shavit_GetMapsStringMap");
+	MarkNativeAsOptional("Shavit_Nominate");
 }
 #endif
