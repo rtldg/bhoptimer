@@ -25,6 +25,7 @@
 #include <sourcemod>
 #include <sdktools_sound>
 #include <convar_class>
+#include <clientprefs>
 
 #include <shavit/core>
 #include <shavit/mapchooser>
@@ -142,7 +143,13 @@ Handle g_hForward_OnUnRTV = null;
 Handle g_hForward_OnSuccesfulRTV = null;
 
 StringMap g_mMapList;
+
+/* Map Completion Marker */
+int g_iStyles;
+stylestrings_t g_sStyleStrings[STYLE_LIMIT];
 StringMap g_mVoteMapsCompleted[MAXPLAYERS+1];
+Handle g_hVoteMapsCompletedStyle = null;
+int g_iVoteMapsCompletedStyle[MAXPLAYERS+1] = {-1, ...};
 
 bool gB_Late = false;
 EngineVersion gEV_Type = Engine_Unknown;
@@ -199,6 +206,8 @@ public void OnPluginStart()
 	g_mMapList = new StringMap();
 	for(int i=1; i < MaxClients; i++)
 		g_mVoteMapsCompleted[i] = new StringMap();
+
+	g_hVoteMapsCompletedStyle = RegClientCookie("smc_completionstyle", "Style used to check map completions in menus", CookieAccess_Protected);
 
 	g_cvMapListType = new Convar("smc_maplist_type", "2", "Where the plugin should get the map list from.\n0 - zoned maps from database\n1 - from maplist file (mapcycle.txt)\n2 - from maps folder\n3 - from zoned maps and confirmed by maplist file\n4 - from zoned maps and confirmed by maps folder", _, true, 0.0, true, float(MapListLAST)-1.0);
 	g_cvMatchFuzzyMap = new Convar("smc_match_fuzzy", "1", "If set to 1, the plugin will accept partial map matches from the database. Useful for workshop maps, bad for duplicate map names", _, true, 0.0, true, 1.0);
@@ -265,6 +274,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_nextmap", Command_NextMap, "Shows next map");
 	RegConsoleCmd("sm_timeleft", Command_Timeleft, "Shows time left on current map");
 
+	RegConsoleCmd("sm_completionstyle", Command_CompletionStyle, "Change the style that map completions in menus are checked for");
+
 	RegAdminCmd("sm_smcdebug", Command_Debug, ADMFLAG_RCON);
 
 	AddCommandListener(Command_MapButFaster, "sm_map");
@@ -275,7 +286,8 @@ public void OnPluginStart()
 	{
 		Shavit_OnDatabaseLoaded();
 		Shavit_OnChatConfigLoaded();
-		
+		Shavit_OnStyleConfigLoaded(-1);
+
 		if(gB_Rankings)
 		{
 			g_bTiersAssigned = true;
@@ -283,8 +295,10 @@ public void OnPluginStart()
 
 		for(int i = 1; i < MaxClients; i++)
 		{
-			if(IsValidClient(i) && !IsFakeClient(i) && IsClientAuthorized(i))
-				OnClientAuthorized(i);
+			if(!IsClientConnected(i) || !IsClientInGame(i) || IsFakeClient(i))
+				continue;
+			if(AreClientCookiesCached(i))
+				OnClientCookiesCached(i);
 		}
 	}
 }
@@ -292,6 +306,17 @@ public void OnPluginStart()
 public void Shavit_OnChatConfigLoaded()
 {
 	Shavit_GetChatStringsStruct(gS_ChatStrings);
+}
+
+public void Shavit_OnStyleConfigLoaded(int styles)
+{
+	if(styles == -1)
+		styles = Shavit_GetStyleCount();
+ 
+	for(int i = 0; i < styles; i++)
+		Shavit_GetStyleStrings(i, sStyleName, g_sStyleStrings[i].sStyleName, sizeof(stylestrings_t::sStyleName));
+
+	g_iStyles = styles;
 }
 
 public void OnLibraryAdded(const char[] name)
@@ -344,10 +369,14 @@ public void OnConfigsExecuted()
 	// cache the nominate menu so that it isn't being built every time player opens it
 }
 
-public void OnClientAuthorized(int client)
+public void OnClientCookiesCached(int client)
 {
-	if (g_hDatabase && !IsFakeClient(client))
+	if(g_hDatabase && !IsFakeClient(client))
 	{
+		char sCookie[4];
+		GetClientCookie(client, g_hVoteMapsCompletedStyle, sCookie, sizeof(sCookie));
+		g_iVoteMapsCompletedStyle[client] = strlen(sCookie) > 0 ? StringToInt(sCookie) : -1;
+
 		g_mVoteMapsCompleted[client].Clear();
 
 		int iSteamID = GetSteamAccountID(client);
@@ -355,12 +384,16 @@ public void OnClientAuthorized(int client)
 			return;
 
 		char sQuery[512];
-		FormatEx(sQuery, sizeof(sQuery), "SELECT DISTINCT map FROM %splayertimes WHERE auth = %d AND track = 0", g_cSQLPrefix, iSteamID);
-		QueryLog(g_hDatabase, SQL_OnClientAuthorized_Callback, sQuery, GetClientSerial(client), DBPrio_High);
+		if(g_iVoteMapsCompletedStyle[client] > -1)
+			FormatEx(sQuery, sizeof(sQuery), "SELECT DISTINCT map FROM %splayertimes WHERE auth = %d AND style = %d AND track = 0", g_cSQLPrefix, iSteamID, g_iVoteMapsCompletedStyle[client]);
+		else
+			FormatEx(sQuery, sizeof(sQuery), "SELECT DISTINCT map FROM %splayertimes WHERE auth = %d AND track = 0", g_cSQLPrefix, iSteamID);
+
+		QueryLog(g_hDatabase, SQL_OnClientCookiesCached_Callback, sQuery, GetClientSerial(client), DBPrio_High);
 	}
 }
 
-public void SQL_OnClientAuthorized_Callback(Database db, DBResultSet results, const char[] error, any data)
+public void SQL_OnClientCookiesCached_Callback(Database db, DBResultSet results, const char[] error, any data)
 {
 	if(results == null || db == INVALID_HANDLE)
 	{
@@ -2230,6 +2263,57 @@ public Action Command_Timeleft(int client, int args)
 	}
 	
 	return Plugin_Continue;
+}
+
+public Action Command_CompletionStyle(int client, int args)
+{
+	Menu menu = new Menu(SelectStyleMenuHandler);
+	SetMenuTitle(menu, "Map Completion Style:\n ");
+
+	menu.AddItem("-1", "Any Style\n ", g_iVoteMapsCompletedStyle[client] == -1 ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+
+	int[] iOrderedStyles = new int[g_iStyles];
+	Shavit_GetOrderedStyles(iOrderedStyles, g_iStyles);
+
+	for(int i = 0; i < g_iStyles; i++)
+	{
+		int iStyle = iOrderedStyles[i];
+		char sStyleID[8];
+		IntToString(iStyle, sStyleID, sizeof(sStyleID));
+		menu.AddItem(sStyleID, g_sStyleStrings[iStyle].sStyleName, g_iVoteMapsCompletedStyle[client] == iStyle ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+	}
+
+	menu.ExitButton = true;
+	DisplayMenu(menu, client, MENU_TIME_FOREVER);
+
+	return Plugin_Handled;
+}
+
+public int SelectStyleMenuHandler(Menu menu, MenuAction action, int param1, int param2)
+{
+	if(action == MenuAction_Select)
+	{
+		char sStyleID[8];
+		menu.GetItem(param2, sStyleID, sizeof(sStyleID));
+		int iStyleID = StringToInt(sStyleID);
+
+		if(-1 <= iStyleID <= g_iStyles)
+		{
+			g_iVoteMapsCompletedStyle[param1] = iStyleID;
+			IntToString(g_iVoteMapsCompletedStyle[param1], sStyleID, sizeof(sStyleID));
+			SetClientCookie(param1, g_hVoteMapsCompletedStyle, sStyleID);
+			OnClientCookiesCached(param1);
+		}
+		else
+		{
+			Shavit_PrintToChat(param1, "Invalid style, please try again");
+			Command_CompletionStyle(param1, 0);
+		}
+	}
+	else if(action == MenuAction_End)
+		delete menu;
+
+	return Plugin_Handled;
 }
 
 public int Null_Callback(Menu menu, MenuAction action, int param1, int param2)
