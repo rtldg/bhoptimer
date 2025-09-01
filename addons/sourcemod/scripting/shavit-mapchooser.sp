@@ -274,7 +274,9 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_nextmap", Command_NextMap, "Shows next map");
 	RegConsoleCmd("sm_timeleft", Command_Timeleft, "Shows time left on current map");
 
-	RegConsoleCmd("sm_completionstyle", Command_CompletionStyle, "Change the style that map completions in menus are checked for");
+	RegConsoleCmd("sm_completion", Command_CompletionStyle, "Change the style that map completions in menus are checked for");
+	RegConsoleCmd("sm_mapcompletion", Command_CompletionStyle, "Change the style that map completions in menus are checked for");
+	RegConsoleCmd("sm_mc", Command_CompletionStyle, "Change the style that map completions in menus are checked for");
 
 	RegAdminCmd("sm_smcdebug", Command_Debug, ADMFLAG_RCON);
 
@@ -1764,7 +1766,7 @@ void CreateNominateMenu()
 				continue;
 			}
 
-			Format(mapdisplay, sizeof(mapdisplay), "%s | T%d", mapdisplay, tier);
+			Format(mapdisplay, sizeof(mapdisplay), "[T%d] %s", tier, mapdisplay);
 		}
 
 		g_hNominateMenu.AddItem(mapname, mapdisplay, style);
@@ -1846,7 +1848,7 @@ void CreateTierMenus()
 			style = ITEMDRAW_DISABLED;
 		}
 
-		Format(mapdisplay, sizeof(mapdisplay), "%s | T%i", mapdisplay, mapTier);
+		Format(mapdisplay, sizeof(mapdisplay), "[T%i] %s", mapTier, mapdisplay);
 
 		if(min <= mapTier <= max)
 		{
@@ -2268,7 +2270,7 @@ public Action Command_Timeleft(int client, int args)
 public Action Command_CompletionStyle(int client, int args)
 {
 	Menu menu = new Menu(SelectStyleMenuHandler);
-	SetMenuTitle(menu, "Map Completion Style:\n ");
+	SetMenuTitle(menu, "Map Completion Marker:\n(Shown in map menus)\n ");
 
 	menu.AddItem("-1", "Any Style\n ", g_iVoteMapsCompletedStyle[client] == -1 ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
 
@@ -2516,12 +2518,17 @@ public Action BaseCommands_Command_Map_Menu(int client, int args)
 			char mapdisplay[PLATFORM_MAX_PATH];
 			LessStupidGetMapDisplayName(entry, mapdisplay, sizeof(mapdisplay));
 
+			bool completed;
+			g_mVoteMapsCompleted[client].GetValue(mapdisplay, completed);
+
 			if(tiersMap)
 			{
 				int tier = 0;
 				tiersMap.GetValue(mapdisplay, tier);
-				Format(mapdisplay, sizeof(mapdisplay), "%s | T%i", mapdisplay, tier);
+				Format(mapdisplay, sizeof(mapdisplay), "[T%i] %s", tier, mapdisplay);
 			}
+
+			Format(mapdisplay, sizeof(mapdisplay), "[%s] %s", completed ? "X" : "  ", mapdisplay);
 
 			menu.AddItem(entry, mapdisplay);
 		}
