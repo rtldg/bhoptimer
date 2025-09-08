@@ -304,7 +304,7 @@
 
 		"#format"		"{1:s},{2:s},{3:s},{4:i},{5:s},{6:s}"
 
-		"en"			"You have already voted to RTV, if you want to un-RTV use the command {1}!unrtv {2}({3}{4} {5} more vote{6} needed)"
+		"en"			"You have already voted to RTV, if you want to un-RTV use the command {1}!unrtv {2}({3}{4} {5}more vote{6} needed)"
 
 	}
 
