@@ -1409,7 +1409,6 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 
 		if((gI_HUD2Settings[client] & HUD2_JUMPS) == 0)
 		{
-			FormatEx(sLine, 128, "%T: %d", "HudJumpsText", client, data.iJumps);
 			AddHUDLine(buffer, maxlen, sLine, iLines);
 		}
 
@@ -1470,7 +1469,10 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 	
 	if(data.iTimerStatus != Timer_Stopped && data.fClosestReplayTime != -1.0)
 	{
-		FormatEx(sLine, 128, "Progress: %.1f％", (((data.fTime - (data.fTime - data.fClosestReplayTime)) / data.fWR) * 100.0));
+		float progress = ((data.fTime - (data.fTime - data.fClosestReplayTime)) / data.fWR) * 100.0;
+		if(progress > 99.9)
+			progress = 99.9;
+		FormatEx(sLine, 128, "Progress: %.1f％", progress);
 		AddHUDLine(buffer, maxlen, sLine, iLines);
 	}
 	
@@ -2413,9 +2415,9 @@ void UpdateKeyHint(int client)
 		return;
 	}
 
-	if(LibraryExists("modern-landfix"))
+	if (LibraryExists("modern-landfix"))
 	{
-		if ((gI_HUDSettings[client] & HUD_LANDFIX) > 0)
+		if (((gI_HUDSettings[client] & HUD_LANDFIX) > 0) && (target > 0 && target <= MaxClients))
 		{
 			FormatEx(sMessage, 256, "%s", Landfix_GetLandfixEnabled(target)?"Landfix On\n\n":"");
 		}
