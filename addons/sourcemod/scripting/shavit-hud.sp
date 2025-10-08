@@ -210,8 +210,6 @@ public void OnPluginStart()
 		..."HUD_USP				8192\n"
 		..."HUD_GLOCK				16384\n"
 		..."HUD_SPECTATORSDEAD			65536\n"
-
-		..."HUD_LANDFIX				1073741824\n"
 	);
 
 	IntToString(HUD_DEFAULT2, defaultHUD, 8);
