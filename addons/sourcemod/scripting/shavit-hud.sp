@@ -210,6 +210,7 @@ public void OnPluginStart()
 		..."HUD_USP				8192\n"
 		..."HUD_GLOCK				16384\n"
 		..."HUD_SPECTATORSDEAD			65536\n"
+
 		..."HUD_LANDFIX				1073741824\n"
 	);
 
@@ -2410,7 +2411,7 @@ void UpdateKeyHint(int client)
 		return;
 	}
 
-	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && !(gI_HUDSettings[client] & HUD_LANDFIX) && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
+	if (!forceUpdate && !(gI_HUDSettings[client] & HUD_SYNC) && !(gI_HUDSettings[client] & HUD_TIMELEFT) && gI_HUD2Settings[client] & HUD2_PERFS)
 	{
 		return;
 	}
