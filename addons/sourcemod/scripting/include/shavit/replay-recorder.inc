@@ -25,6 +25,13 @@
 #define _shavit_replay_recorder_included
 
 /**
+ * Balls
+ *
+ * @param path                      balls
+ */
+native void Shavit_AlsoSaveReplayTo(char[] path);
+
+/**
  * Called when a player finishes a time. Allows you to save a replay even if the run is not a WR.
  *
  * @param client                    Client index.

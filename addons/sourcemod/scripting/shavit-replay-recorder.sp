@@ -100,6 +100,8 @@ bool gB_HijackFramesKeepOnStart[MAXPLAYERS+1];
 bool gB_ReplayPlayback = false;
 bool gB_Floppy = false;
 
+ArrayList gA_PathsToSaveReplayTo = null;
+
 //#include <TickRateControl>
 forward void TickRate_OnTickRateChanged(float fOld, float fNew);
 
@@ -111,6 +113,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("Shavit_HijackAngles", Native_HijackAngles);
 	CreateNative("Shavit_SetReplayData", Native_SetReplayData);
 	CreateNative("Shavit_SetPlayerPreFrames", Native_SetPlayerPreFrames);
+	CreateNative("Shavit_AlsoSaveReplayTo", Native_AlsoSaveReplayTo);
 
 	if (!FileExists("cfg/sourcemod/plugin.shavit-replay-recorder.cfg") && FileExists("cfg/sourcemod/plugin.shavit-replay.cfg"))
 	{
@@ -360,6 +363,9 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	float length = ExistingWrReplayLength(style, track);
 	bool isBestReplay = (length == 0.0 || time < length);
 
+	delete gA_PathsToSaveReplayTo;
+	ArrayList paths = gA_PathsToSaveReplayTo = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH), 2);
+
 	Action action = Plugin_Continue;
 	Call_StartForward(gH_ShouldSaveReplayCopy);
 	Call_PushCell(client);
@@ -378,12 +384,19 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	Call_PushCell(isTooLong);
 	Call_Finish(action);
 
+	gA_PathsToSaveReplayTo = null;
+
 	bool makeCopy = (action != Plugin_Continue);
 	bool makeReplay = (isBestReplay && !isTooLong);
 
 	if (!makeCopy && !makeReplay)
 	{
 		return;
+	}
+
+	if (makeReplay)
+	{
+		paths.PushString("blah");
 	}
 
 	char sName[MAX_NAME_LENGTH];
@@ -417,24 +430,28 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 
 	if (gB_Floppy)
 	{
-		char buf[512];
-		int headersize = WriteReplayHeaderToBuffer(buf, style, track, time, iSteamID, gI_PlayerPrerunFrames[client], postframes, fZoneOffset, gI_PlayerFrames[client], gF_Tickrate, gS_Map);
+		char headerbuf[512];
+		int headersize = WriteReplayHeaderToBuffer(headerbuf, style, track, time, iSteamID, gI_PlayerPrerunFrames[client], postframes, fZoneOffset, gI_PlayerFrames[client], gF_Tickrate, gS_Map);
 
 		char wrpath[PLATFORM_MAX_PATH], copypath[PLATFORM_MAX_PATH];
-		if (makeReplay)
+		if (makeReplay) {
 			FormatEx(wrpath, sizeof(wrpath),
 				track>0?"%s/%d/%s_%d.replay" : "%s/%d/%s.replay",
 				gS_ReplayFolder, style, gS_Map, track
 			);
-		if (makeCopy)
+			paths.PushString(wrpath);
+		}
+		// TODO: remove?
+		if (makeCopy) {
 			FormatEx(copypath, sizeof(copypath), "%s/copy/%d_%d_%s.replay", gS_ReplayFolder, timestamp, iSteamID, gS_Map);
+			paths.PushString(copypath);
+		}
 
 		SRCWRFloppy_AsyncSaveReplay(
 			  FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem
 			, dp
-			, wrpath
-			, copypath
-			, buf
+			, paths
+			, headerbuf
 			, headersize
 			, playerrecording
 			, gI_PlayerFrames[client]
@@ -442,6 +459,7 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	}
 	else
 	{
+		// TODO: handle paths ArrayList
 		char sPath[PLATFORM_MAX_PATH];
 		bool saved = SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, timestamp, fZoneOffset, makeCopy, makeReplay, sPath, sizeof(sPath));
 		FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(saved, dp, sPath)
@@ -720,6 +738,17 @@ public int Native_SetPlayerPreFrames(Handle handler, int numParams)
 
 	gI_PlayerPrerunFrames[client] = preframes;
 	return 1;
+}
+
+public int Native_AlsoSaveReplayTo(Handle plugin, int numParams)
+{
+	if (gA_PathsToSaveReplayTo)
+	{
+		char path[PLATFORM_MAX_PATH];
+		GetNativeString(1, path, sizeof(path));
+		gA_PathsToSaveReplayTo.PushString(path);
+	}
+	return 0; // native has void return so this value doesn't matter.
 }
 
 public int Native_GetReplayData(Handle plugin, int numParams)
