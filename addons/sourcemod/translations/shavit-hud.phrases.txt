@@ -129,27 +129,27 @@
 	}
 	"HudCenter"
 	{
-		"en"		"Center text"
+		"en"		"Bottom Center HUD"
 	}
 	"HudZoneHud"
 	{
-		"en"		"Zone HUD"
+		"en"		"In-Zone HUD (bottom center)"
 	}
 	"HudObserve"
 	{
-		"en"		"Spectate HUD"
+		"en"		"HUD when spectating"
 	}
 	"HudSpectators"
 	{
-		"en"		"Spectator list"
+		"en"		"Spectator list (right)"
 	}
 	"HudSpectatorsDead"
 	{
-		"en"		"Spectator list (only when dead)"
+		"en"		"Disable Spectator list while alive"
 	}
 	"HudKeyOverlay"
 	{
-		"en"		"Key display"
+		"en"		"Key display (top center)"
 	}
 	"HudHideWeapon"
 	{

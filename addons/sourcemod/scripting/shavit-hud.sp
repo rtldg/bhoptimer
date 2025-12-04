@@ -751,15 +751,19 @@ Action ShowHUDMenu(int client, int item)
 		FormatEx(sInfo, 16, "@%d", HUD2_TIMEDIFFERENCE);
 		FormatEx(sHudItem, 64, "%T", "HudTimeDifference", client);
 		menu.AddItem(sInfo, sHudItem);
-
-		FormatEx(sInfo, 16, "@%d", HUD2_VELOCITYDIFFERENCE);
-		FormatEx(sHudItem, 64, "%T", "HudVelocityDifference", client);
-		menu.AddItem(sInfo, sHudItem);
 	}
 
 	FormatEx(sInfo, 16, "@%d", HUD2_SPEED);
 	FormatEx(sHudItem, 64, "%T", "HudSpeedText", client);
 	menu.AddItem(sInfo, sHudItem);
+
+	if (gB_ReplayPlayback)
+	{
+
+		FormatEx(sInfo, 16, "@%d", HUD2_VELOCITYDIFFERENCE);
+		FormatEx(sHudItem, 64, "%T", "HudVelocityDifference", client);
+		menu.AddItem(sInfo, sHudItem);
+	}
 
 	FormatEx(sInfo, 16, "@%d", HUD2_JUMPS);
 	FormatEx(sHudItem, 64, "%T", "HudJumpsText", client);
