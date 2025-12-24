@@ -208,6 +208,7 @@ public void OnPluginStart()
 		..."HUD_NOPRACALERT			4096\n"
 		..."HUD_USP                  8192\n"
 		..."HUD_GLOCK                16384\n"
+		..."HUD_DEBUGTARGETNAME      32768\n"
 		..."HUD_SPECTATORSDEAD       65536\n"
 		..."HUD_PERFS_CENTER        131072\n"
 	);
