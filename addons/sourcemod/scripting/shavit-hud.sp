@@ -692,7 +692,7 @@ Action ShowHUDMenu(int client, int item)
 	FormatEx(sInfo, 16, "!%d", HUD_SPECTATORSDEAD);
 	FormatEx(sHudItem, 64, "%T", "HudSpectatorsDead", client);
 	menu.AddItem(sInfo, sHudItem);
-	
+
 	FormatEx(sInfo, 16, "!%d", HUD_LANDFIX);
 	FormatEx(sHudItem, 64, "%T", "HudLandfix", client);
 	menu.AddItem(sInfo, sHudItem);
@@ -1243,7 +1243,7 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 	int iLines = 0;
 	char sLine[128];
 	int target = GetSpectatorTarget(client, client);
-	
+
 	if (client == data.iTarget && !AreClientCookiesCached(client))
 	{
 		FormatEx(sLine, sizeof(sLine), "%T", "TimerLoading", client);
@@ -1347,7 +1347,7 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 			{
 				char sKey1[16] = "A-Only";
 				char sKey2[16] = "D-Only";
-				
+
 				if(StrEqual(gS_StyleStrings[data.iStyle].sStyleName, "W-A/W-D-Only"))
 				{
 					sKey1 = "W-A-Only";
@@ -1358,11 +1358,11 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 					sKey1 = "A-Only Pro";
 					sKey2 = "D-Only Pro";
 				}
-				
+
 				if (Shavit_GetClientKeyCombo(target) == 0)
 				{
 					AddHUDLine(buffer, maxlen, sKey1, iLines);
-					
+
 				}
 				else if (Shavit_GetClientKeyCombo(target) == 1)
 				{
@@ -1478,7 +1478,7 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 			AddHUDLine(buffer, maxlen, sLine, iLines);
 		}
 	}
-	
+
 	if(data.iTimerStatus != Timer_Stopped && data.fClosestReplayTime != -1.0)
 	{
 		float progress = ((data.fTime - (data.fTime - data.fClosestReplayTime)) / data.fWR) * 100.0;
@@ -1487,7 +1487,7 @@ int AddHUDToBuffer_Source2013(int client, huddata_t data, char[] buffer, int max
 		FormatEx(sLine, 128, "Progress: %.1f％", progress);
 		AddHUDLine(buffer, maxlen, sLine, iLines);
 	}
-	
+
 	if(data.iTimerStatus != Timer_Stopped && data.iTrack != Track_Main && (gI_HUD2Settings[client] & HUD2_TRACK) == 0)
 	{
 		char sTrack[32];
@@ -1827,7 +1827,7 @@ void UpdateMainHUD(int client)
 	huddata.fClosestReplayTime = -1.0;
 	huddata.fClosestVelocityDifference = 0.0;
 	huddata.fClosestReplayLength = 0.0;
-	
+
 	if (!bReplay && gB_ReplayPlayback)
 	{
 		if (Shavit_GetReplayFrameCount(Shavit_GetBhopStyle(target), huddata.iTrack) != 0)
@@ -1842,7 +1842,7 @@ void UpdateMainHUD(int client)
 		{
 			Shavit_SetClosestReplayStyle(client, 3);
 		}
-		
+
 		if (Shavit_GetReplayFrameCount(Shavit_GetClosestReplayStyle(client), huddata.iTrack) != 0)
 		{
 			if(Shavit_GetClosestReplayStyle(client) == Shavit_GetBhopStyle(target))
