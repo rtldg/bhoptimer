@@ -411,7 +411,6 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	ArrayList playerrecording = view_as<ArrayList>(CloneHandle(gA_PlayerFrames[client]));
 
 	DataPack dp = new DataPack();
-	dp.WriteCell(paths);
 	dp.WriteCell(GetClientSerial(client));
 	dp.WriteCell(style);
 	dp.WriteCell(time);
@@ -426,7 +425,7 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	dp.WriteCell(timestamp);
 	dp.WriteCell(isBestReplay);
 	dp.WriteCell(isTooLong);
-	dp.WriteCell(makeCopy);
+	dp.WriteCell(paths);
 	dp.WriteCell(playerrecording);
 	dp.WriteCell(gI_PlayerPrerunFrames[client]);
 	dp.WriteCell(postframes);
@@ -468,7 +467,6 @@ void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value, 
 	DataPack dp = value;
 	dp.Reset();
 
-	ArrayList paths = dp.ReadCell();
 
 	int client = GetClientFromSerial(dp.ReadCell());
 	int style = dp.ReadCell();
@@ -484,7 +482,7 @@ void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value, 
 	int timestamp = dp.ReadCell();
 	bool isBestReplay = dp.ReadCell();
 	bool isTooLong = dp.ReadCell();
-	bool makeCopy = dp.ReadCell();
+	ArrayList paths = dp.ReadCell();
 	ArrayList playerrecording = dp.ReadCell();
 	int preframes = dp.ReadCell();
 	int postframes = dp.ReadCell();
