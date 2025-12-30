@@ -9,7 +9,7 @@
 
 
 typeset ReplaySavedCallback {
-	function void(bool saved, any value, char[] sPath);
+	function void(bool saved, any value);
 }
 
 

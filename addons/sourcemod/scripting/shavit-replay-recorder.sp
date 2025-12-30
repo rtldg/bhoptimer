@@ -462,11 +462,10 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	ClearFrames(client);
 }
 
-void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value, char[] sPath)
+void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value)
 {
 	DataPack dp = value;
 	dp.Reset();
-
 
 	int client = GetClientFromSerial(dp.ReadCell());
 	int style = dp.ReadCell();
