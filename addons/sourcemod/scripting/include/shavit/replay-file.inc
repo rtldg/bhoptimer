@@ -394,9 +394,7 @@ stock int WriteReplayHeaderToBuffer(char[] buf, int style, int track, float time
 	return pos;
 }
 
-// file_a is usually used as the wr replay file.
-// file_b is usually used as the duplicate/backup replay file.
-stock void WriteReplayFrames(ArrayList playerrecording, int iSize, File file_a, File file_b)
+stock void WriteReplayFrames(ArrayList playerrecording, int iSize, File replayfile)
 {
 	any aFrameData[sizeof(frame_t)];
 	any aWriteData[sizeof(frame_t) * REPLAY_FRAMES_PER_WRITE];
@@ -413,16 +411,7 @@ stock void WriteReplayFrames(ArrayList playerrecording, int iSize, File file_a, 
 
 		if(++iFramesWritten == REPLAY_FRAMES_PER_WRITE || i == iSize - 1)
 		{
-			if (file_a)
-			{
-				file_a.Write(aWriteData, sizeof(frame_t) * iFramesWritten, 4);
-			}
-
-			if (file_b)
-			{
-				file_b.Write(aWriteData, sizeof(frame_t) * iFramesWritten, 4);
-			}
-
+			replayfile.Write(aWriteData, sizeof(frame_t) * iFramesWritten, 4);
 			iFramesWritten = 0;
 		}
 	}

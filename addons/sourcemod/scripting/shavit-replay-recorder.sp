@@ -77,7 +77,7 @@ Convar gCV_PlaybackPreRunTime = null;
 Convar gCV_PreRunAlways = null;
 Convar gCV_TimeLimit = null;
 
-Handle gH_ShouldSaveReplayCopy = null;
+Handle gH_AddAdditionalReplayPathsHere = null;
 Handle gH_OnReplaySaved = null;
 
 bool gB_RecordingEnabled[MAXPLAYERS+1]; // just a simple thing to prevent plugin reloads from recording half-replays
@@ -143,8 +143,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-	gH_ShouldSaveReplayCopy = CreateGlobalForward("Shavit_ShouldSaveReplayCopy", ET_Event, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
-	gH_OnReplaySaved = CreateGlobalForward("Shavit_OnReplaySaved", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_String, Param_Cell, Param_Cell, Param_Cell, Param_String);
+	gH_AddAdditionalReplayPathsHere = CreateGlobalForward("Shavit_AddAdditionalReplayPathsHere", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+	gH_OnReplaySaved = CreateGlobalForward("Shavit_OnReplaySaved", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_String);
 
 	gCV_Enabled = new Convar("shavit_replay_recording_enabled", "1", "Enable replay bot functionality?", 0, true, 0.0, true, 1.0);
 	gCV_PlaybackPostRunTime = new Convar("shavit_replay_postruntime", "1.5", "Time (in seconds) to record after a player enters the end zone.", 0, true, 0.0, true, 2.0);
@@ -364,10 +364,21 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	bool isBestReplay = (length == 0.0 || time < length);
 
 	delete gA_PathsToSaveReplayTo;
-	ArrayList paths = gA_PathsToSaveReplayTo = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH), 2);
+	ArrayList paths = gA_PathsToSaveReplayTo = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH));
 
-	Action action = Plugin_Continue;
-	Call_StartForward(gH_ShouldSaveReplayCopy);
+	bool makeReplay = (isBestReplay && !isTooLong);
+
+	if (makeReplay)
+	{
+		char wrpath[PLATFORM_MAX_PATH];
+		FormatEx(wrpath, sizeof(wrpath),
+			track>0?"%s/%d/%s_%d.replay" : "%s/%d/%s.replay",
+			gS_ReplayFolder, style, gS_Map, track
+		);
+		paths.PushString(wrpath);
+	}
+
+	Call_StartForward(gH_AddAdditionalReplayPathsHere);
 	Call_PushCell(client);
 	Call_PushCell(style);
 	Call_PushCell(time);
@@ -382,21 +393,13 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	Call_PushCell(timestamp);
 	Call_PushCell(isBestReplay);
 	Call_PushCell(isTooLong);
-	Call_Finish(action);
+	Call_Finish();
 
 	gA_PathsToSaveReplayTo = null;
 
-	bool makeCopy = (action != Plugin_Continue);
-	bool makeReplay = (isBestReplay && !isTooLong);
-
-	if (!makeCopy && !makeReplay)
+	if (paths.Length == 0)
 	{
 		return;
-	}
-
-	if (makeReplay)
-	{
-		paths.PushString("blah");
 	}
 
 	char sName[MAX_NAME_LENGTH];
@@ -408,6 +411,7 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	ArrayList playerrecording = view_as<ArrayList>(CloneHandle(gA_PlayerFrames[client]));
 
 	DataPack dp = new DataPack();
+	dp.WriteCell(paths);
 	dp.WriteCell(GetClientSerial(client));
 	dp.WriteCell(style);
 	dp.WriteCell(time);
@@ -433,20 +437,6 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 		char headerbuf[512];
 		int headersize = WriteReplayHeaderToBuffer(headerbuf, style, track, time, iSteamID, gI_PlayerPrerunFrames[client], postframes, fZoneOffset, gI_PlayerFrames[client], gF_Tickrate, gS_Map);
 
-		char wrpath[PLATFORM_MAX_PATH], copypath[PLATFORM_MAX_PATH];
-		if (makeReplay) {
-			FormatEx(wrpath, sizeof(wrpath),
-				track>0?"%s/%d/%s_%d.replay" : "%s/%d/%s.replay",
-				gS_ReplayFolder, style, gS_Map, track
-			);
-			paths.PushString(wrpath);
-		}
-		// TODO: remove?
-		if (makeCopy) {
-			FormatEx(copypath, sizeof(copypath), "%s/copy/%d_%d_%s.replay", gS_ReplayFolder, timestamp, iSteamID, gS_Map);
-			paths.PushString(copypath);
-		}
-
 		SRCWRFloppy_AsyncSaveReplay(
 			  FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem
 			, dp
@@ -459,10 +449,16 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	}
 	else
 	{
-		// TODO: handle paths ArrayList
-		char sPath[PLATFORM_MAX_PATH];
-		bool saved = SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, timestamp, fZoneOffset, makeCopy, makeReplay, sPath, sizeof(sPath));
-		FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(saved, dp, sPath)
+		bool saved = false;
+
+		for (int i = 0, size = paths.Length; i < size; ++i) {
+			char path[PLATFORM_MAX_PATH];
+			paths.GetString(i, path, sizeof(path));
+			saved = saved || SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, timestamp, fZoneOffset, path);
+		}
+
+		bool saved = ;
+		FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(saved, dp)
 	}
 
 	ClearFrames(client);
@@ -472,6 +468,8 @@ void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value, 
 {
 	DataPack dp = value;
 	dp.Reset();
+
+	ArrayList paths = dp.ReadCell();
 
 	int client = GetClientFromSerial(dp.ReadCell());
 	int style = dp.ReadCell();
@@ -516,8 +514,7 @@ void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value, 
 	Call_PushCell(timestamp);
 	Call_PushCell(isBestReplay);
 	Call_PushCell(isTooLong);
-	Call_PushCell(makeCopy);
-	Call_PushString(sPath);
+	Call_PushCell(paths);
 	Call_PushCell(playerrecording);
 	Call_PushCell(preframes);
 	Call_PushCell(postframes);
@@ -574,66 +571,19 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 	}
 }
 
-bool SaveReplay(int style, int track, float time, int steamid, int preframes, ArrayList playerrecording, int iSize, int postframes, int timestamp, float fZoneOffset[2], bool saveCopy, bool saveWR, char[] sPath, int sPathLen)
+bool SaveReplay(int style, int track, float time, int steamid, int preframes, ArrayList playerrecording, int iSize, int postframes, int timestamp, float fZoneOffset[2], const char[] sPath)
 {
-	char sTrack[4];
-	FormatEx(sTrack, 4, "_%d", track);
+	File fReplay = null;
 
-	File fWR = null;
-	File fCopy = null;
-
-	if (saveCopy)
-	{
-		FormatEx(sPath, sPathLen, "%s/copy/%d_%d_%s.replay", gS_ReplayFolder, timestamp, steamid, gS_Map);
-
-		if (!(fCopy = OpenFile(sPath, "wb+")))
-		{
-			LogError("Failed to open 'copy' replay file for writing. ('%s')", sPath);
-		}
+	if (!(fReplay = OpenFile(sPath, "wb+")))
+		LogError("Failed to open replay file for writing. ('%s')", sPath);
+		return false;
 	}
 
-	if (saveWR)
-	{
-		FormatEx(sPath, sPathLen, "%s/%d/%s%s.replay", gS_ReplayFolder, style, gS_Map, (track > 0)? sTrack:"");
+	WriteReplayHeader(fReplay, style, track, time, steamid, preframes, postframes, fZoneOffset, iSize, gF_Tickrate, gS_Map);
+	WriteReplayFrames(playerrecording, iSize, fReplay);
 
-		if (!(fWR = OpenFile(sPath, "wb+")))
-		{
-			LogError("Failed to open WR replay file for writing. ('%s')", sPath);
-		}
-	}
-
-	if (!fWR && !fCopy)
-	{
-		// I want to try and salvage the replay file so let's write it out to a random
-		//  file and hope people read the error log to figure out what happened...
-		// I'm not really sure how we could reach this though as
-		//  `Shavit_Replay_CreateDirectories` should have failed if it couldn't create
-		//  a test file.
-		FormatEx(sPath, sPathLen, "%s/%d_%s%s_%d.replay", gS_ReplayFolder, style, gS_Map, sTrack, iSize-preframes-postframes);
-
-		if (!(fWR = OpenFile(sPath, "wb+")))
-		{
-			LogError("Couldn't open a WR, 'copy', or 'salvage' replay file....");
-			return false;
-		}
-
-		LogError("Couldn't open a WR or 'copy' replay file. Writing 'salvage' replay @ (style %d) '%s'", style, sPath);
-	}
-
-	if (fWR)
-	{
-		WriteReplayHeader(fWR, style, track, time, steamid, preframes, postframes, fZoneOffset, iSize, gF_Tickrate, gS_Map);
-	}
-
-	if (fCopy)
-	{
-		WriteReplayHeader(fCopy, style, track, time, steamid, preframes, postframes, fZoneOffset, iSize, gF_Tickrate, gS_Map);
-	}
-
-	WriteReplayFrames(playerrecording, iSize, fWR, fCopy);
-
-	delete fWR;
-	delete fCopy;
+	delete fReplay;
 	return true;
 }
 
