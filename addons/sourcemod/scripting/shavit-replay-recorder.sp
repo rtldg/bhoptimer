@@ -457,7 +457,6 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 			saved = saved || SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, timestamp, fZoneOffset, path);
 		}
 
-		bool saved = ;
 		FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(saved, dp)
 	}
 
@@ -575,7 +574,7 @@ bool SaveReplay(int style, int track, float time, int steamid, int preframes, Ar
 {
 	File fReplay = null;
 
-	if (!(fReplay = OpenFile(sPath, "wb+")))
+	if (!(fReplay = OpenFile(sPath, "wb+"))) {
 		LogError("Failed to open replay file for writing. ('%s')", sPath);
 		return false;
 	}
