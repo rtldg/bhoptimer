@@ -450,10 +450,17 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	{
 		bool saved = false;
 
-		for (int i = 0, size = paths.Length; i < size; ++i) {
-			char path[PLATFORM_MAX_PATH];
+		for (int i = 0, size = paths.Length; i < size; ++i)
+		{
+			char path[PLATFORM_MAX_PATH], tmp[PLATFORM_MAX_PATH];
 			paths.GetString(i, path, sizeof(path));
-			saved = saved || SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, timestamp, fZoneOffset, path);
+			FormatEx(tmp, sizeof(tmp), "%s.tmp", path);
+
+			if (SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, timestamp, fZoneOffset, tmp))
+			{
+				saved = true;
+				RenameFile(path, tmp);
+			}
 		}
 
 		FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(saved, dp)
