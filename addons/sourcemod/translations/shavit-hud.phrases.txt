@@ -141,11 +141,11 @@
 	}
 	"HudCenter"
 	{
-		"en"		"Bottom Center HUD"
+		"en"		"(Bottom) Center HUD"
 	}
 	"HudZoneHud"
 	{
-		"en"		"In-Zone HUD (bottom center)"
+		"en"		"In-Zone HUD (center hud)"
 	}
 	"HudObserve"
 	{
