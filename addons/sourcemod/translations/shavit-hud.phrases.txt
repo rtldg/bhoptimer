@@ -81,9 +81,21 @@
 	{
 		"en"		"Sync"
 	}
+	"HudSync_keyhint"
+	{
+		"en"		"Sync (right side)"
+	}
+	"HudSync_center"
+	{
+		"en"		"Sync (center hud)"
+	}
 	"HudPerfs"
 	{
 		"en"		"Perfect jumps"
+	}
+	"HudPerfs_keyhint"
+	{
+		"en"		"Perfect jumps (right side)"
 	}
 	"HudPerfsCenter"
 	{
@@ -141,7 +153,7 @@
 	}
 	"HudSpectators"
 	{
-		"en"		"Spectator list (right)"
+		"en"		"Spectator list"
 	}
 	"HudSpectatorsDead"
 	{
@@ -149,7 +161,7 @@
 	}
 	"HudKeyOverlay"
 	{
-		"en"		"Key display (top center)"
+		"en"		"Key display"
 	}
 	"HudHideWeapon"
 	{

@@ -708,7 +708,7 @@ Action ShowHUDMenu(int client, int item)
 	if(IsSource2013(gEV_Type))
 	{
 		FormatEx(sInfo, 16, "!%d", HUD_SYNC);
-		FormatEx(sHudItem, 64, "%T", "HudSync", client);
+		FormatEx(sHudItem, 64, "%T", "HudSync_keyhint", client);
 		menu.AddItem(sInfo, sHudItem);
 
 		FormatEx(sInfo, 16, "!%d", HUD_TIMELEFT);
@@ -775,11 +775,11 @@ Action ShowHUDMenu(int client, int item)
 	menu.AddItem(sInfo, sHudItem);
 
 	FormatEx(sInfo, 16, "@%d", HUD2_SYNC);
-	FormatEx(sHudItem, 64, "%T", "HudSync", client);
+	FormatEx(sHudItem, 64, "%T", "HudSync_center", client);
 	menu.AddItem(sInfo, sHudItem);
 
 	FormatEx(sInfo, 16, "@%d", HUD2_PERFS);
-	FormatEx(sHudItem, 64, "%T", "HudPerfs", client);
+	FormatEx(sHudItem, 64, "%T", "HudPerfs_keyhint", client);
 	menu.AddItem(sInfo, sHudItem);
 
 	FormatEx(sInfo, 16, "!%d", HUD_PERFS_CENTER);
