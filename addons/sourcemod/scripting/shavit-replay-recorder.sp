@@ -456,7 +456,7 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 			paths.GetString(i, path, sizeof(path));
 			FormatEx(tmp, sizeof(tmp), "%s.tmp", path);
 
-			if (SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, timestamp, fZoneOffset, tmp))
+			if (SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, fZoneOffset, tmp))
 			{
 				saved = true;
 				RenameFile(path, tmp);
@@ -574,7 +574,7 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 	}
 }
 
-bool SaveReplay(int style, int track, float time, int steamid, int preframes, ArrayList playerrecording, int iSize, int postframes, int timestamp, float fZoneOffset[2], const char[] sPath)
+bool SaveReplay(int style, int track, float time, int steamid, int preframes, ArrayList playerrecording, int iSize, int postframes, float fZoneOffset[2], const char[] sPath)
 {
 	File fReplay = null;
 
