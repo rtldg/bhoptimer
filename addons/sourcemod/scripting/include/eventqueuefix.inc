@@ -3,7 +3,7 @@
 #endif
 #define _eventqueuefix_included
 
-public SharedPlugin __pl_eventqueuefix = 
+public SharedPlugin __pl_eventqueuefix =
 {
     name = "eventqueuefix",
     file = "eventqueuefix.smx",
@@ -29,6 +29,7 @@ enum struct eventpack_t
 {
 	ArrayList playerEvents;
 	ArrayList outputWaits;
+	ArrayList OnUser1_4[4];
 }
 
 enum struct entity_t
@@ -45,7 +46,7 @@ enum struct entity_t
  *
  * @return 							True if successful, false otherwise.
  */
-native bool GetClientEvents(int client, any[] eventpack);
+native bool GetClientEvents(int client, any[] eventpack, int packsize=sizeof(eventpack_t));
 
 /*
  * Sets the current pending events for a client.
@@ -55,7 +56,7 @@ native bool GetClientEvents(int client, any[] eventpack);
  *
  * @return 							True if successful, false otherwise.
  */
-native bool SetClientEvents(int client, any[] eventpack);
+native bool SetClientEvents(int client, any[] eventpack, int packsize=sizeof(eventpack_t));
 
 /*
  * Clears the current pending events for a client.
@@ -87,11 +88,11 @@ native bool SetEventsTimescale(int client, float timescale);
 native bool SetClientEventsPaused(int client, bool paused);
 
 /*
- * Check if events is paused 
+ * Check if events is paused
  *
  * @param client					Client index.
  *
- * @return 							True if events are paused for client, false otherwise. Will throw native error if client is invalid. 
+ * @return 							True if events are paused for client, false otherwise. Will throw native error if client is invalid.
  */
 native bool IsClientEventsPaused(int client);
 
