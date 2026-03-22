@@ -3,7 +3,7 @@
 #endif
 #define _eventqueuefix_included
 
-public SharedPlugin __pl_eventqueuefix =
+public SharedPlugin __pl_eventqueuefix = 
 {
     name = "eventqueuefix",
     file = "eventqueuefix.smx",
@@ -88,11 +88,11 @@ native bool SetEventsTimescale(int client, float timescale);
 native bool SetClientEventsPaused(int client, bool paused);
 
 /*
- * Check if events is paused
+ * Check if events is paused 
  *
  * @param client					Client index.
  *
- * @return 							True if events are paused for client, false otherwise. Will throw native error if client is invalid.
+ * @return 							True if events are paused for client, false otherwise. Will throw native error if client is invalid. 
  */
 native bool IsClientEventsPaused(int client);
 
