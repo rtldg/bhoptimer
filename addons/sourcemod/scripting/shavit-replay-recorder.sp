@@ -494,11 +494,13 @@ void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value)
 	int postframes = dp.ReadCell();
 	char sName[MAX_NAME_LENGTH];
 	dp.ReadString(sName, sizeof(sName));
+	delete dp;
 
 	if (!saved)
 	{
 		LogError("Failed to save replay... Skipping OnReplaySaved");
 		delete playerrecording; // importante!
+		delete paths;
 		return;
 	}
 
@@ -525,6 +527,7 @@ void FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem(bool saved, any value)
 	Call_Finish();
 
 	delete playerrecording;
+	delete paths;
 }
 
 public void Shavit_OnFinish(int client, int style, float time, int jumps, int strafes, float sync, int track, float oldtime, float perfs, float avgvel, float maxvel, int timestamp)
