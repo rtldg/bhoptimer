@@ -1,12 +1,6 @@
 /*
- * by: shavit, kidfearless, Nairda, GAMMA CASE, rumour, rtldg, sh4hrazad, Ciallo-Ani, olivia, Nuko, yupi2
- * fork by: luna
- *
- * Changes from upstream:
- *   - Segmented checkpoint limit is now configurable with no hard cap (0 = unlimited)
- *   - Pause-on-teleport toggle in seg menu, unpauses on any input
- *   - Fixed velocity being lost on the first teleport of a session
- *
+ * shavit's Timer - Checkpoints
+ * by: shavit, kidfearless, Nairda, GAMMA CASE, rumour, rtldg, sh4hrazad, Ciallo-Ani, olivia, Nuko, yupi2, luna
  * This file is part of shavit's Timer (https://github.com/shavitush/bhoptimer)
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -109,12 +103,12 @@ int gI_CurrentCheckpoint[MAXPLAYERS+1];
 int gI_TimesTeleported[MAXPLAYERS+1];
 bool gB_InCheckpointMenu[MAXPLAYERS+1];
 
-int gI_UsingCheckpointsOwner[MAXPLAYERS+1];
+int gI_UsingCheckpointsOwner[MAXPLAYERS+1]; // 0 = use player's own checkpoints
 
 int gI_CheckpointsSettings[MAXPLAYERS+1];
 
 // save states
-bool gB_SaveStates[MAXPLAYERS+1];
+bool gB_SaveStates[MAXPLAYERS+1]; // whether we have data for when player rejoins from spec
 ArrayList gA_PersistentData = null;
 
 bool gB_Eventqueuefix = false;
@@ -229,10 +223,7 @@ public void OnPluginStart()
 	gCV_UseOthers = new Convar("shavit_checkpoints_useothers", "1", "Allow players to use or duplicate another player's checkpoints.", 0, true, 0.0, true, 1.0);
 	gCV_RestoreStates = new Convar("shavit_checkpoints_restorestates", "1", "Save the players' timer/position etc.. when they die/change teams,\nand load the data when they spawn?\n0 - Disabled\n1 - Enabled", 0, true, 0.0, true, 1.0);
 	gCV_MaxCP = new Convar("shavit_checkpoints_maxcp", "1000", "Maximum amount of checkpoints.\nNote: Very high values will result in high memory usage!", 0, true, 1.0, true, 10000.0);
-
-	// removed hard upper cap. 0 = unlimited. server ops should be careful with memory.
-	gCV_MaxCP_Segmented = new Convar("shavit_checkpoints_maxcp_seg", "500", "Maximum amount of segmented checkpoints. 0 = unlimited.\nMake this less or equal to shavit_checkpoints_maxcp.\nNote: Very high values will result in HUGE memory usage! Segmented checkpoints contain frame data!", 0, true, 0.0);
-
+	gCV_MaxCP_Segmented = new Convar("shavit_checkpoints_maxcp_seg", "10", "Maximum amount of segmented checkpoints.\nMake this less or equal to shavit_checkpoints_maxcp.\nNote: Very high values will result in HUGE memory usage! Segmented checkpoints contain frame data!", 0, true, 0.0, true, 10000.0);
 	gCV_PersistData = new Convar("shavit_checkpoints_persistdata", "600", "How long to persist timer data for disconnected users in seconds?\n-1 - Until map change\n0 - Disabled", 0, true, -1.0);
 
 	Convar.AutoExecConfig();
@@ -394,6 +385,7 @@ public void Shavit_OnResume(int client, int track)
 	// if the resume was triggered by our pause-on-tele, don't load persistent data
 	if (gB_SaveStates[client] && !gB_PausedOnTele[client])
 	{
+		// events&outputs won't work properly unless we do this next frame...
 		RequestFrame(LoadPersistentData, GetClientSerial(client));
 	}
 }
@@ -497,6 +489,7 @@ public void OnClientCookiesCached(int client)
 		gI_CheckpointsSettings[client] = StringToInt(sSetting);
 	}
 
+	// TODO: BAD
 	gI_Style[client] = Shavit_GetBhopStyle(client);
 }
 
@@ -559,6 +552,7 @@ public void OnClientDisconnect(int client)
 
 	PersistData(client, true);
 
+	// if data wasn't persisted, then we have checkpoints to reset...
 	ResetCheckpoints(client);
 	delete gA_Checkpoints[client];
 }
@@ -620,6 +614,8 @@ public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle, int tr
 
 	if (bSegmented || bKzcheckpoints)
 	{
+		// Gammacase somehow had this callback fire before OnClientPutInServer.
+		// OnClientPutInServer will still fire but we need a valid arraylist in the mean time.
 		if(gA_Checkpoints[client] == null)
 		{
 			gA_Checkpoints[client] = new ArrayList(sizeof(cp_cache_t));
@@ -643,6 +639,7 @@ public Action Shavit_OnStart(int client)
 {
 	gI_TimesTeleported[client] = 0;
 
+	// shavit-kz
 	if(Shavit_GetStyleSettingBool(gI_Style[client], "kzcheckpoints"))
 	{
 		ResetCheckpoints(client);
@@ -678,6 +675,7 @@ public void Player_Spawn(Event event, const char[] name, bool dontBroadcast)
 	{
 		if(gCV_RestoreStates.BoolValue)
 		{
+			// events&outputs won't work properly unless we do this next frame...
 			RequestFrame(LoadPersistentData, serial);
 		}
 	}
@@ -689,6 +687,7 @@ public void Player_Spawn(Event event, const char[] name, bool dontBroadcast)
 		if (iIndex != -1)
 		{
 			gB_SaveStates[client] = true;
+			// events&outputs won't work properly unless we do this next frame...
 			RequestFrame(LoadPersistentData, serial);
 		}
 	}
@@ -724,17 +723,7 @@ bool CanSegment(int client)
 
 int GetMaxCPs(int client)
 {
-	if (CanSegment(client))
-	{
-		int iSegMax = gCV_MaxCP_Segmented.IntValue;
-		return (iSegMax == 0) ? 0 : iSegMax;	// 0 = unlimited
-	}
-	return gCV_MaxCP.IntValue;
-}
-
-bool IsUnlimitedCPs(int client)
-{
-	return CanSegment(client) && gCV_MaxCP_Segmented.IntValue == 0;
+	return CanSegment(client)? gCV_MaxCP_Segmented.IntValue:gCV_MaxCP.IntValue;
 }
 
 int FindPersistentData(int client, persistent_data_t aData)
@@ -761,6 +750,7 @@ void PersistData(int client, bool disconnected)
 		(!IsPlayerAlive(client) && !disconnected) ||
 		(!IsPlayerAlive(client) && disconnected && !gB_SaveStates[client]) ||
 		GetSteamAccountID(client) == 0 ||
+		//Shavit_GetTimerStatus(client) == Timer_Stopped ||
 		(!gCV_RestoreStates.BoolValue && !disconnected) ||
 		(gCV_PersistData.IntValue == 0 && disconnected))
 	{
@@ -914,7 +904,7 @@ public Action Command_Checkpoints(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if (!gA_Checkpoints[client])
+	if (!gA_Checkpoints[client]) // probably got here from another plugin doing `FakeClientCommandEx(param1, "sm_checkpoints");` too early or too late
 	{
 		return Plugin_Handled;
 	}
@@ -994,7 +984,7 @@ public Action Command_Tele(int client, int args)
 
 		int parsed = StringToInt(arg);
 
-		if(parsed > 0)
+		if(0 < parsed <= gCV_MaxCP.IntValue)
 		{
 			index = parsed;
 		}
@@ -1145,18 +1135,10 @@ void OpenCPMenu(int client)
 	}
 
 	char sDisplay[64];
-	int iMaxCPs = GetMaxCPs(client);
 	int newcount = gA_Checkpoints[client].Length + 1;
+	int maxcps = GetMaxCPs(client);
 
-	// show unlimited or capped count in save button
-	if (IsUnlimitedCPs(client))
-	{
-		FormatEx(sDisplay, 64, "%T [%d | unlimited]", (iUsingOwner == client) ? "MiscCheckpointSave" : "MiscCheckpointDuplicate", client, newcount);
-	}
-	else
-	{
-		FormatEx(sDisplay, 64, "%T", (iUsingOwner == client) ? "MiscCheckpointSave" : "MiscCheckpointDuplicate", client, (newcount > iMaxCPs ? iMaxCPs : newcount), iMaxCPs);
-	}
+	FormatEx(sDisplay, 64, "%T", (iUsingOwner == client) ? "MiscCheckpointSave" : "MiscCheckpointDuplicate", client, (newcount > maxcps ? maxcps : newcount), maxcps);
 
 	menu.AddItem("save", sDisplay, (iUsingOwner == client || gA_Checkpoints[iUsingOwner].Length > 0) ? ITEMDRAW_DEFAULT:ITEMDRAW_DISABLED);
 
@@ -1540,6 +1522,7 @@ bool SaveCheckpoint(int client, bool duplicate = false)
 
 	if (target > MaxClients)
 	{
+		// TODO: Replay_Prop...
 		return false;
 	}
 
@@ -1593,8 +1576,7 @@ bool SaveCheckpoint(int client, bool duplicate = false)
 	}
 
 	int iMaxCPs = GetMaxCPs(client);
-	// if unlimited (0), never overflow
-	bool overflow = (iMaxCPs > 0 && gA_Checkpoints[client].Length >= iMaxCPs);
+	bool overflow = (gA_Checkpoints[client].Length >= iMaxCPs);
 	int index = (overflow ? iMaxCPs : gA_Checkpoints[client].Length+1);
 
 	Action result = Plugin_Continue;
@@ -1742,6 +1724,7 @@ void SaveCheckpointCache(int saver, int target, cp_cache_t cpcache, int index, H
 
 	if(IsFakeClient(target))
 	{
+		// unfortunately replay bots don't have a snapshot, so we can generate a fake one
 		snapshot.bTimerEnabled = true;
 		snapshot.fCurrentTime = Shavit_GetReplayTime(target);
 		snapshot.bClientPaused = false;
@@ -1819,6 +1802,13 @@ void SaveCheckpointCache(int saver, int target, cp_cache_t cpcache, int index, H
 
 	cpcache.iSteamID = GetSteamAccountID(target);
 
+#if 0
+	if (cpcache.iSteamID != GetSteamAccountID(saver))
+	{
+		cpcache.aSnapshot.bPracticeMode = true;
+	}
+#endif
+
 	StringMap cd = new StringMap();
 
 	if (plugin != INVALID_HANDLE)
@@ -1841,10 +1831,7 @@ void SaveCheckpointCache(int saver, int target, cp_cache_t cpcache, int index, H
 
 void TeleportToCheckpoint(int client, int index, bool suppressMessage, int target=0)
 {
-	int iMaxCPs = GetMaxCPs(client);
-
-	// if limited, validate against max. if unlimited (0), only validate lower bound.
-	if(index < 1 || (iMaxCPs > 0 && index > iMaxCPs) || (!gCV_Checkpoints.BoolValue && !CanSegment(client)))
+	if(index < 1 || index > gCV_MaxCP.IntValue || (!gCV_Checkpoints.BoolValue && !CanSegment(client)))
 	{
 		return;
 	}
@@ -1925,8 +1912,10 @@ void TeleportToCheckpoint(int client, int index, bool suppressMessage, int targe
 	}
 }
 
+// index = -1 when persistent data. index = 0 when Shavit_LoadCheckpointCache() usually. index > 0 when "actually a checkpoint"
 bool LoadCheckpointCache(int client, cp_cache_t cpcache, int index, bool force = false)
 {
+	// ripped this out and put it here since Shavit_LoadSnapshot() checks this and we want to bail early if LoadSnapShot would fail
 	if (!force && !Shavit_HasStyleAccess(client, cpcache.aSnapshot.bsStyle))
 	{
 		return false;
@@ -1986,6 +1975,8 @@ bool LoadCheckpointCache(int client, cp_cache_t cpcache, int index, bool force =
 	if (cpcache.aSnapshot.iFullTicks > 0 && (cpcache.aSnapshot.bPracticeMode || !(cpcache.bSegmented || isPersistentData) || GetSteamAccountID(client) != cpcache.iSteamID))
 	{
 		cpcache.aSnapshot.bPracticeMode = true;
+
+		// Do this here to trigger practice mode alert
 		Shavit_SetPracticeMode(client, true, true);
 	}
 
@@ -2047,6 +2038,7 @@ bool LoadCheckpointCache(int client, cp_cache_t cpcache, int index, bool force =
 		Shavit_ResumeTimer(client);
 	}
 
+	// Used to trigger all endtouch booster events which are then wiped via eventqueuefix :)
 	MaybeDoPhysicsUntouch(client);
 
 	if (!cpcache.aSnapshot.bPracticeMode)
@@ -2071,6 +2063,17 @@ bool LoadCheckpointCache(int client, cp_cache_t cpcache, int index, bool force =
 		ep.OnUser1_4 = cpcache.aOnUser1_4;
 		SetClientEvents(client, ep);
 	}
+
+#if DEBUG
+		PrintToConsole(client, "targetname='%s'", cpcache.sTargetname);
+
+		for (int i = 0; i < cpcache.aEvents.Length; i++)
+		{
+			event_t e;
+			cpcache.aEvents.GetArray(i, e);
+			PrintToConsole(client, "%s %s %s %f %i %i %i", e.target, e.targetInput, e.variantValue, e.delay, e.activator, e.caller, e.outputID);
+		}
+#endif
 
 	Call_StartForward(gH_Forwards_OnCheckpointCacheLoaded);
 	Call_PushCell(client);
@@ -2178,13 +2181,12 @@ public any Native_SetCheckpoint(Handle plugin, int numParams)
 		position = numcps + 1;
 	}
 
-	// 0 = no limit
-	if (position == 0 && maxcps > 0 && numcps >= maxcps)
+	if (position == 0 && numcps >= maxcps)
 	{
 		return false;
 	}
 
-	if (maxcps > 0 && position > maxcps)
+	if (position > maxcps)
 	{
 		return false;
 	}
@@ -2299,9 +2301,8 @@ public any Native_SetCurrentCheckpoint(Handle plugin, int numParams)
 public any Native_SaveCheckpoint(Handle plugin, int numParams)
 {
 	int client = GetNativeCell(1);
-	int maxcps = GetMaxCPs(client);
 
-	if(!CanSegment(client) && maxcps > 0 && gA_Checkpoints[client].Length >= maxcps)
+	if(!CanSegment(client) && gA_Checkpoints[client].Length >= GetMaxCPs(client))
 	{
 		return -1;
 	}
