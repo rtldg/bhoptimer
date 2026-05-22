@@ -3,6 +3,7 @@
  * by: shavit, kidfearless, Nairda, GAMMA CASE, rumour, rtldg, sh4hrazad, Ciallo-Ani, olivia, Nuko, yupi2, luna
  * This file is part of shavit's Timer (https://github.com/shavitush/bhoptimer)
  *
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 3.0, as published by the
  * Free Software Foundation.
@@ -136,7 +137,7 @@ public Plugin myinfo =
 	author = "shavit, KiD Fearless, Nairda, GAMMA CASE, rumour, rtldg, sh4hrazad, Ciallo-Ani, olivia, Nuko, yupi2, luna",
 	description = "Checkpoints for shavit's bhop timer.",
 	version = SHAVIT_VERSION,
-	url = "https://github.com/2x74/shavit-segmented-improved"
+	url = "https://github.com/shavitush/bhoptimer"
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
@@ -283,6 +284,8 @@ void LoadDHooks()
 	}
 
 	int instr = LoadFromAddress(buttonsSig, NumberType_Int32);
+	// The lowest two bytes are the beginning of a `mov`.
+	// The offset is 100% definitely totally always 16-bit.
 	gI_Offset_m_afButtonDisabled = instr >> 16;
 	gI_Offset_m_afButtonForced = gI_Offset_m_afButtonDisabled + 4;
 
@@ -415,6 +418,7 @@ public Action Command_Jointeam(int client, const char[] command, int args)
 
 public MRESReturn CBasePlayer__CommitSuicide(int client, DHookParam params)
 {
+	//bool bExplode = params.Get(1);
 	bool bForce = params.Get(2);
 
 	if (IsPlayerAlive(client) && (bForce || gF_NextSuicide[client] <= GetGameTime()))
@@ -1957,7 +1961,6 @@ bool LoadCheckpointCache(int client, cp_cache_t cpcache, int index, bool force =
 	SetEntData(client, gI_Offset_m_afButtonDisabled, cpcache.m_afButtonDisabled);
 	SetEntData(client, gI_Offset_m_afButtonForced, cpcache.m_afButtonForced);
 
-	// kz
 	if(!isPersistentData && Shavit_GetStyleSettingInt(gI_Style[client], "kzcheckpoints"))
 	{
 		SetEntityMoveType(client, cpcache.iMoveType);
@@ -2062,7 +2065,6 @@ bool LoadCheckpointCache(int client, cp_cache_t cpcache, int index, bool force =
 		ep.outputWaits = cpcache.aOutputWaits;
 		ep.OnUser1_4 = cpcache.aOnUser1_4;
 		SetClientEvents(client, ep);
-	}
 
 #if DEBUG
 		PrintToConsole(client, "targetname='%s'", cpcache.sTargetname);
@@ -2074,6 +2076,7 @@ bool LoadCheckpointCache(int client, cp_cache_t cpcache, int index, bool force =
 			PrintToConsole(client, "%s %s %s %f %i %i %i", e.target, e.targetInput, e.variantValue, e.delay, e.activator, e.caller, e.outputID);
 		}
 #endif
+	}
 
 	Call_StartForward(gH_Forwards_OnCheckpointCacheLoaded);
 	Call_PushCell(client);
