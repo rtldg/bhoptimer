@@ -434,7 +434,7 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 	if (gB_Floppy)
 	{
 		char headerbuf[512];
-		int headersize = WriteReplayHeaderToBuffer(headerbuf, style, track, time, iSteamID, gI_PlayerPrerunFrames[client], postframes, fZoneOffset, gI_PlayerFrames[client], gF_Tickrate, gS_Map);
+		int headersize = WriteReplayHeaderToBuffer(headerbuf, style, track, time, iSteamID, gI_PlayerPrerunFrames[client], postframes, fZoneOffset, gI_PlayerFrames[client], gF_Tickrate, gS_Map, timestamp);
 
 		SRCWRFloppy_AsyncSaveReplay(
 			  FloppyAsynchronouslySavedMyReplayWhichWasNiceOfThem
@@ -456,7 +456,7 @@ void DoReplaySaverCallbacks(int iSteamID, int client, int style, float time, int
 			paths.GetString(i, path, sizeof(path));
 			FormatEx(tmp, sizeof(tmp), "%s.tmp", path);
 
-			if (SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, fZoneOffset, tmp))
+			if (SaveReplay(style, track, time, iSteamID, gI_PlayerPrerunFrames[client], playerrecording, gI_PlayerFrames[client], postframes, fZoneOffset, tmp, timestamp))
 			{
 				saved = true;
 				RenameFile(path, tmp);
@@ -577,7 +577,7 @@ public void Shavit_OnFinish(int client, int style, float time, int jumps, int st
 	}
 }
 
-bool SaveReplay(int style, int track, float time, int steamid, int preframes, ArrayList playerrecording, int iSize, int postframes, float fZoneOffset[2], const char[] sPath)
+bool SaveReplay(int style, int track, float time, int steamid, int preframes, ArrayList playerrecording, int iSize, int postframes, float fZoneOffset[2], const char[] sPath, int timestamp)
 {
 	File fReplay = null;
 
@@ -586,7 +586,7 @@ bool SaveReplay(int style, int track, float time, int steamid, int preframes, Ar
 		return false;
 	}
 
-	WriteReplayHeader(fReplay, style, track, time, steamid, preframes, postframes, fZoneOffset, iSize, gF_Tickrate, gS_Map);
+	WriteReplayHeader(fReplay, style, track, time, steamid, preframes, postframes, fZoneOffset, iSize, gF_Tickrate, gS_Map, timestamp);
 	WriteReplayFrames(playerrecording, iSize, fReplay);
 
 	delete fReplay;
